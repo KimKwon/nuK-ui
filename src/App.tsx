@@ -5,7 +5,7 @@ function App() {
 
   return (
     <main>
-      <Select selectedOption={options[0]}>
+      <Select>
         <Select.Trigger>옵션을 선택해주세요.</Select.Trigger>
         <Select.List>
           {options.map((option, index) => (

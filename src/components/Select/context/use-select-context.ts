@@ -1,8 +1,8 @@
-import { useContext } from 'react';
+import { RefObject, useContext } from 'react';
 import { selectContext } from './index';
 
 function useSelectContext() {
-  const selectInfo = useContext(selectContext.state);
+  const { listRef, triggerRef, selectedOption, onChange, optionList, isOpen } = useContext(selectContext.state);
   const dispatch = useContext(selectContext.dispatch);
 
   const changeSelectOpenStatus = (isOpen: boolean) => {
@@ -31,7 +31,40 @@ function useSelectContext() {
     });
   };
 
-  return { selectInfo, openSelect: changeSelectOpenStatus(true), closeSelect: changeSelectOpenStatus(false), toggleSelectOpenStatus, selectOption };
+  const applyListRef = (ref: RefObject<HTMLUListElement>) => {
+    dispatch({
+      type: 'applyRef/listRef',
+      payload: {
+        ref,
+      },
+    });
+  };
+
+  const _addOptionRef = (_ref: RefObject<HTMLLIElement>) => ({});
+
+  const applyTriggerRef = (ref: RefObject<HTMLButtonElement>) => {
+    dispatch({
+      type: 'applyRef/triggerRef',
+      payload: {
+        ref,
+      },
+    });
+  };
+
+  return {
+    applyListRef,
+    applyTriggerRef,
+    listRef,
+    triggerRef,
+    selectedOption,
+    onChange,
+    optionList,
+    isOpen,
+    openSelect: changeSelectOpenStatus(true),
+    closeSelect: changeSelectOpenStatus(false),
+    toggleSelectOpenStatus,
+    selectOption,
+  };
 }
 
 export default useSelectContext;

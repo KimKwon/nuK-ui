@@ -22,6 +22,8 @@ describe('Test Select Component', () => {
       optionList: ['option1', 'option2', 'option3', 'option4'],
       selectedOption: 'option1',
       onChange: (_option: string) => undefined,
+      listRef: null,
+      triggerRef: null,
     };
 
     const wrapper = ({ children }: PropsWithChildren) => <SelectControllProvider defaultContext={defaultContext}>{children}</SelectControllProvider>;
@@ -30,19 +32,13 @@ describe('Test Select Component', () => {
         wrapper,
       });
 
-    it('Return defaultContext to selectInfo.', () => {
-      const { result } = renderHookWithSelectContext();
-
-      expect(result.current.selectInfo).toEqual(defaultContext);
-    });
-
     it('OpenSelect function change value of isOpen to true.', () => {
       const { result, rerender } = renderHookWithSelectContext();
 
       result.current.openSelect();
       rerender();
 
-      expect(result.current.selectInfo.isOpen).toBe(true);
+      expect(result.current.isOpen).toBe(true);
     });
 
     it('SelectOption function change value of selectedOption to that value.', () => {
@@ -51,7 +47,7 @@ describe('Test Select Component', () => {
       result.current.selectOption('option2');
       rerender();
 
-      expect(result.current.selectInfo.selectedOption).toBe('option2');
+      expect(result.current.selectedOption).toBe('option2');
     });
   });
 });

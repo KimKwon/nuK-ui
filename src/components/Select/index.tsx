@@ -1,10 +1,11 @@
 import { FunctionComponent, PropsWithChildren, useEffect, useRef } from 'react';
 import styled from 'styled-components';
+import useClickOutside from '../../hooks/use-click-outside';
 import { SelectControllProvider } from './context';
 import useSelectContext from './context/use-select-context';
 
 interface SelectProps {
-  selectedOption: string;
+  selectedOption?: string;
   onChange?: (option: string) => void;
   className?: string;
 }
@@ -24,56 +25,67 @@ function withSelectProvider(Component: FunctionComponent<PropsWithChildren<Selec
 }
 
 const S = {
-  Select: styled.div``,
+  Select: styled.div`
+    position: relative;
+  `,
   Trigger: styled.button``,
   List: styled.ul`
+    position: absolute;
+    top: 1em;
     padding: 0;
-  `,
-  Option: styled.li`
-    all: unset;
+
     display: flex;
     flex-direction: column;
-    &:focus {
-      background-color: aqua;
-    }
+  `,
+  Option: styled.li<{ isActive: boolean }>`
+    all: unset;
+
+    width: fit-content;
+    background-color: ${({ isActive }) => isActive && 'aqua'};
   `,
 };
 
 function Select({ children, selectedOption, className, onChange: _onChange }: PropsWithChildren<SelectProps>) {
-  const { toggleSelectOpenStatus, selectOption } = useSelectContext();
+  const { selectOption, listRef, triggerRef, closeSelect } = useSelectContext();
+
+  useClickOutside([listRef!, triggerRef!], closeSelect);
 
   useEffect(() => {
-    toggleSelectOpenStatus();
-    selectOption(selectedOption);
-  }, []);
+    if (selectedOption) selectOption(selectedOption);
+  }, [selectedOption]);
 
   return <S.Select className={className}>{children}</S.Select>;
 }
 
 function Trigger({ children }: PropsWithChildren) {
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const {
-    selectInfo: { selectedOption },
-    toggleSelectOpenStatus,
-  } = useSelectContext();
+  const { selectedOption, toggleSelectOpenStatus, applyTriggerRef } = useSelectContext();
+
+  useEffect(() => {
+    if (triggerRef.current) applyTriggerRef(triggerRef);
+  }, []);
 
   return (
-    <S.Trigger ref={buttonRef} type="button" onClick={toggleSelectOpenStatus} aria-haspopup aria-expanded aria-controls="select-button">
+    <S.Trigger ref={triggerRef} type="button" onClick={toggleSelectOpenStatus} aria-haspopup aria-expanded aria-controls="select-button">
       {selectedOption || children}
     </S.Trigger>
   );
 }
 
 function List({ children }: PropsWithChildren) {
-  const {
-    selectInfo: { isOpen },
-  } = useSelectContext();
+  const listRef = useRef<HTMLUListElement>(null);
+
+  const { isOpen, applyListRef } = useSelectContext();
+
+  useEffect(() => {
+    if (listRef.current) applyListRef(listRef);
+  }, []);
 
   return (
     <>
       {isOpen && (
-        <S.List role="listbox" id="select-box" aria-labelledby="select-button">
+        <S.List ref={listRef} role="listbox" id="select-box" aria-labelledby="select-button">
           {children}
         </S.List>
       )}
@@ -83,27 +95,16 @@ function List({ children }: PropsWithChildren) {
 
 function Option({ value }: PropsWithChildren<OptionProps>) {
   const optionRef = useRef<HTMLLIElement>(null);
-  const {
-    closeSelect,
-    selectOption,
-    selectInfo: { selectedOption },
-  } = useSelectContext();
+
+  const { closeSelect, selectOption, selectedOption } = useSelectContext();
 
   const handleOptionClick = () => {
     selectOption(value);
     closeSelect();
   };
 
-  useEffect(() => {
-    if (!optionRef.current) return;
-
-    if (selectedOption === value) {
-      optionRef.current.focus();
-    }
-  }, []);
-
   return (
-    <S.Option ref={optionRef} onClick={handleOptionClick} role="option">
+    <S.Option isActive={value === selectedOption} ref={optionRef} onClick={handleOptionClick} role="option">
       {value}
     </S.Option>
   );
