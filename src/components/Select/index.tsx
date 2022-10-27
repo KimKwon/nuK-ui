@@ -1,9 +1,12 @@
-import { FunctionComponent, PropsWithChildren, useContext, useEffect, useRef } from 'react';
-import { selectContext, SelectControllProvider } from './context';
+import { FunctionComponent, PropsWithChildren, useEffect, useRef } from 'react';
+import styled from 'styled-components';
+import { SelectControllProvider } from './context';
+import useSelectContext from './context/use-select-context';
 
 interface SelectProps {
   selectedOption: string;
   onChange?: (option: string) => void;
+  className?: string;
 }
 
 interface OptionProps {
@@ -11,7 +14,7 @@ interface OptionProps {
 }
 
 function withSelectProvider(Component: FunctionComponent<PropsWithChildren<SelectProps>>) {
-  return function (props: PropsWithChildren<SelectProps>) {
+  return function Provided(props: PropsWithChildren<SelectProps>) {
     return (
       <SelectControllProvider>
         <Component {...props} />
@@ -20,47 +23,59 @@ function withSelectProvider(Component: FunctionComponent<PropsWithChildren<Selec
   };
 }
 
-function Select({ children, selectedOption, onChange }: PropsWithChildren<SelectProps>) {
-  const dispatch = useContext(selectContext.dispatch);
+const S = {
+  Select: styled.div``,
+  Trigger: styled.button``,
+  List: styled.ul`
+    padding: 0;
+  `,
+  Option: styled.li`
+    all: unset;
+    display: flex;
+    flex-direction: column;
+    &:focus {
+      background-color: aqua;
+    }
+  `,
+};
+
+function Select({ children, selectedOption, className, onChange: _onChange }: PropsWithChildren<SelectProps>) {
+  const { toggleSelectOpenStatus, selectOption } = useSelectContext();
 
   useEffect(() => {
-    dispatch({
-      type: 'selectedOption/select_option',
-      payload: {
-        option: selectedOption,
-      },
-    });
+    toggleSelectOpenStatus();
+    selectOption(selectedOption);
   }, []);
 
-  return <>{children}</>;
+  return <S.Select className={className}>{children}</S.Select>;
 }
 
 function Trigger({ children }: PropsWithChildren) {
-  const { selectedOption } = useContext(selectContext.state);
-  const dispatch = useContext(selectContext.dispatch);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const handleClick = () => {
-    dispatch({
-      type: 'isOpen/toggle_open',
-    });
-  };
+  const {
+    selectInfo: { selectedOption },
+    toggleSelectOpenStatus,
+  } = useSelectContext();
 
   return (
-    <button type="button" onClick={handleClick} aria-haspopup aria-expanded aria-controls="select-button">
+    <S.Trigger ref={buttonRef} type="button" onClick={toggleSelectOpenStatus} aria-haspopup aria-expanded aria-controls="select-button">
       {selectedOption || children}
-    </button>
+    </S.Trigger>
   );
 }
 
 function List({ children }: PropsWithChildren) {
-  const { isOpen } = useContext(selectContext.state);
+  const {
+    selectInfo: { isOpen },
+  } = useSelectContext();
 
   return (
     <>
       {isOpen && (
-        <ul role="listbox" id="select-box" aria-labelledby="select-button">
+        <S.List role="listbox" id="select-box" aria-labelledby="select-button">
           {children}
-        </ul>
+        </S.List>
       )}
     </>
   );
@@ -68,23 +83,15 @@ function List({ children }: PropsWithChildren) {
 
 function Option({ value }: PropsWithChildren<OptionProps>) {
   const optionRef = useRef<HTMLLIElement>(null);
-  const { selectedOption } = useContext(selectContext.state);
-  const dispatch = useContext(selectContext.dispatch);
+  const {
+    closeSelect,
+    selectOption,
+    selectInfo: { selectedOption },
+  } = useSelectContext();
 
   const handleOptionClick = () => {
-    dispatch({
-      type: 'selectedOption/select_option',
-      payload: {
-        option: value,
-      },
-    });
-
-    dispatch({
-      type: 'isOpen/set_open',
-      payload: {
-        isOpen: false,
-      },
-    });
+    selectOption(value);
+    closeSelect();
   };
 
   useEffect(() => {
@@ -96,10 +103,10 @@ function Option({ value }: PropsWithChildren<OptionProps>) {
   }, []);
 
   return (
-    <li ref={optionRef} onClick={handleOptionClick} role="option">
+    <S.Option ref={optionRef} onClick={handleOptionClick} role="option">
       {value}
-    </li>
+    </S.Option>
   );
 }
 
-export default Object.assign(withSelectProvider(Select), { Trigger, List, Option });
+export default Object.assign(withSelectProvider(Select), { OriginSelect: Select, Trigger, List, Option });

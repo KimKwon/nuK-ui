@@ -7,6 +7,10 @@ export interface SelectContext {
   onChange: (option: string) => void;
 }
 
+interface SelectControllProviderProps {
+  defaultContext?: SelectContext;
+}
+
 const actions = {
   SET_OPEN: 'isOpen/set_open',
   TOGGLE_OPEN: 'isOpen/toggle_open',
@@ -38,12 +42,12 @@ const initialSelectControll = {
   isOpen: false,
   optionList: [],
   selectedOption: '',
-  onChange: (option: string) => undefined,
+  onChange: (_option: string) => undefined,
 };
 
 export const selectContext = {
   state: createContext<SelectContext>(initialSelectControll),
-  dispatch: createContext<SelectDispatch>((action: ActionType) => ({} as SelectContext)),
+  dispatch: createContext<SelectDispatch>((_action: ActionType) => ({} as SelectContext)),
 };
 
 type ActionType = ActionMap[keyof PayloadsType];
@@ -65,8 +69,8 @@ function reducer(state: SelectContext, action: ActionType) {
   }
 }
 
-export function SelectControllProvider({ children }: PropsWithChildren) {
-  const [state, dispatch] = useReducer(reducer, initialSelectControll);
+export function SelectControllProvider({ children, defaultContext }: PropsWithChildren<SelectControllProviderProps>) {
+  const [state, dispatch] = useReducer(reducer, defaultContext || initialSelectControll);
 
   const { state: StateContext, dispatch: DispatchContext } = selectContext;
 
