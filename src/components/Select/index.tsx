@@ -11,19 +11,13 @@ interface OptionProps {
 }
 
 function withSelectProvider(Component: FunctionComponent<PropsWithChildren<SelectProps>>) {
-  function ProvidedComponent(props: PropsWithChildren<SelectProps>) {
+  return function (props: PropsWithChildren<SelectProps>) {
     return (
       <SelectControllProvider>
         <Component {...props} />
       </SelectControllProvider>
     );
-  }
-
-  ProvidedComponent.Trigger = Trigger;
-  ProvidedComponent.List = List;
-  ProvidedComponent.Option = Option;
-
-  return ProvidedComponent;
+  };
 }
 
 function Select({ children, selectedOption, onChange }: PropsWithChildren<SelectProps>) {
@@ -108,4 +102,4 @@ function Option({ value }: PropsWithChildren<OptionProps>) {
   );
 }
 
-export default withSelectProvider(Select);
+export default Object.assign(withSelectProvider(Select), { Trigger, List, Option });
