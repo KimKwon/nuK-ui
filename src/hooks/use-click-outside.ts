@@ -1,7 +1,7 @@
 import { RefObject } from 'react';
 import useEventListener from './use-event-listener';
 
-function useClickOutside(domRefs: RefObject<HTMLElement>[], onClickOutside: () => void) {
+function useClickOutside(domRefs: (RefObject<HTMLElement> | null)[], onClickOutside: () => void, isOpen?: boolean) {
   function handleClickOutside(e: MouseEvent) {
     const target = e.composedPath?.()?.[0] || e.target;
     if (!target || !(target instanceof HTMLElement)) return;
@@ -13,7 +13,7 @@ function useClickOutside(domRefs: RefObject<HTMLElement>[], onClickOutside: () =
       return domRef.current?.contains(target);
     });
 
-    if (isInsideClick) return;
+    if (isInsideClick || !isOpen) return;
 
     onClickOutside();
   }

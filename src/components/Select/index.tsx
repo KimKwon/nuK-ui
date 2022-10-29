@@ -1,28 +1,31 @@
-import { FunctionComponent, PropsWithChildren, useEffect, useRef } from 'react';
+import { PropsWithChildren, useEffect, useId, useReducer, useRef } from 'react';
 import styled from 'styled-components';
 import useClickOutside from '../../hooks/use-click-outside';
-import { SelectControllProvider } from './context';
-import useSelectContext from './context/use-select-context';
+import useEventListener from '../../hooks/use-event-listener';
+import { reducer } from './contexts/reducer';
+import useSelectContext from './contexts/use-select-context';
+import useCallbackRef from '../../hooks/use-callback-ref';
+import { SelectContext } from './contexts/context';
+import useCreateAction from './contexts/use-create-action';
+import { Actions } from './contexts/type';
 
-interface SelectProps {
-  selectedOption?: string;
-  onChange?: (option: string) => void;
+interface SelectProps<T> {
+  value?: T;
+  onChange?: (value: T) => void;
   className?: string;
 }
 
 interface OptionProps {
-  value: string;
+  value: unknown;
+  disabled?: boolean;
+  optionIndex: number;
 }
 
-function withSelectProvider(Component: FunctionComponent<PropsWithChildren<SelectProps>>) {
-  return function Provided(props: PropsWithChildren<SelectProps>) {
-    return (
-      <SelectControllProvider>
-        <Component {...props} />
-      </SelectControllProvider>
-    );
-  };
-}
+/**
+ * ==============================
+ * Style Object
+ * ==============================
+ */
 
 const S = {
   Select: styled.div`
@@ -31,36 +34,93 @@ const S = {
   Trigger: styled.button``,
   List: styled.ul`
     position: absolute;
-    top: 1em;
+    top: 0;
     padding: 0;
 
     display: flex;
     flex-direction: column;
+    gap: 10px;
+
+    background-color: white;
+    border: 1px solid black;
+    box-shadow: 3px 3px 3px 3px rgba(0, 0, 0, 0.3);
   `,
-  Option: styled.li<{ isActive: boolean }>`
+  Option: styled.li`
     all: unset;
 
-    width: fit-content;
-    background-color: ${({ isActive }) => isActive && 'aqua'};
+    &:focus {
+      background-color: red;
+    }
+
+    &:hover {
+      cursor: pointer;
+    }
   `,
 };
 
-function Select({ children, selectedOption, className, onChange: _onChange }: PropsWithChildren<SelectProps>) {
-  const { selectOption, listRef, triggerRef, closeSelect } = useSelectContext();
+/**
+ * ==============================
+ * SelectContext
+ * ==============================
+ */
 
-  useClickOutside([listRef!, triggerRef!], closeSelect);
+/**
+ * ==============================
+ * Select
+ * ==============================
+ */
 
-  useEffect(() => {
-    if (selectedOption) selectOption(selectedOption);
-  }, [selectedOption]);
+function Select<T>({ children, className, onChange, value }: PropsWithChildren<SelectProps<T>>) {
+  const { state: StateContext, dispatch: DispatchContext } = SelectContext;
 
-  return <S.Select className={className}>{children}</S.Select>;
+  const [state, dispatch] = useReducer(reducer, {
+    value,
+    isOpen: false,
+    optionList: [],
+    selectedOptionIndex: null,
+    onChange: onChange as any,
+    listRef: null,
+    triggerRef: null,
+    optionRefList: [],
+  });
+
+  const { listRef, triggerRef, isOpen } = state;
+
+  state.value = value;
+
+  useClickOutside(
+    [listRef, triggerRef],
+    () => {
+      dispatch({
+        type: Actions.SET_OPEN,
+        payload: {
+          isOpen: false,
+        },
+      });
+    },
+    isOpen,
+  );
+
+  return (
+    <StateContext.Provider value={state}>
+      <DispatchContext.Provider value={dispatch}>
+        <S.Select className={className}>{children}</S.Select>
+      </DispatchContext.Provider>
+    </StateContext.Provider>
+  );
 }
+
+/**
+ * ==============================
+ * Trigger
+ * ==============================
+ */
 
 function Trigger({ children }: PropsWithChildren) {
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const { selectedOption, toggleSelectOpenStatus, applyTriggerRef } = useSelectContext();
+  const { toggleSelectOpenStatus, applyTriggerRef } = useCreateAction();
+  const context = useSelectContext();
 
   useEffect(() => {
     if (triggerRef.current) applyTriggerRef(triggerRef);
@@ -68,46 +128,93 @@ function Trigger({ children }: PropsWithChildren) {
 
   return (
     <S.Trigger ref={triggerRef} type="button" onClick={toggleSelectOpenStatus} aria-haspopup aria-expanded aria-controls="select-button">
-      {selectedOption || children}
+      {context?.value ? <>{context?.value}</> : children}
     </S.Trigger>
   );
 }
 
-function List({ children }: PropsWithChildren) {
-  const listRef = useRef<HTMLUListElement>(null);
+/**
+ * ==============================
+ * List
+ * ==============================
+ */
 
-  const { isOpen, applyListRef } = useSelectContext();
+function List({ children }: PropsWithChildren) {
+  const [listRef, setListRef] = useCallbackRef<HTMLUListElement>();
+
+  const context = useSelectContext();
+  const { applyListRef } = useCreateAction();
+
+  useEventListener(listRef?.current, 'keydown', (e) => {
+    switch (e.key) {
+      case 'ArrowDown':
+        return;
+      case 'ArrowUp':
+        return;
+      case 'Tab':
+        e.preventDefault();
+        return;
+    }
+  });
 
   useEffect(() => {
-    if (listRef.current) applyListRef(listRef);
+    if (listRef?.current) applyListRef(listRef);
+  }, [listRef]);
+
+  return context?.isOpen ? (
+    <S.List tabIndex={0} ref={setListRef} role="listbox" id="select-box" aria-labelledby="select-button">
+      {children}
+    </S.List>
+  ) : null;
+}
+
+/**
+ * ==============================
+ * Option
+ * ==============================
+ */
+
+function Option({ optionIndex, value: optionValue, children, disabled }: PropsWithChildren<OptionProps>) {
+  const optionId = useId();
+  const [optionRef, setOptionRef] = useCallbackRef<HTMLLIElement>();
+
+  const context = useSelectContext();
+  const { changeSelectOpenStatus, selectOption, applyOptionRef, unapplyOptionRef } = useCreateAction();
+
+  const handleOptionClick = () => {
+    selectOption(optionIndex);
+    changeSelectOpenStatus(false)();
+    context?.onChange?.(optionValue);
+  };
+
+  const handleMouseOver = () => {
+    optionRef?.current?.focus();
+  };
+
+  useEffect(() => {
+    if (optionRef?.current)
+      applyOptionRef({
+        id: optionId,
+        optionInfo: {
+          domRef: optionRef,
+          optionValue,
+          disabled,
+          originText: optionRef.current.innerText,
+        },
+      });
+  }, [optionId, optionRef, optionValue, disabled]);
+
+  useEffect(() => {
+    return () => {
+      unapplyOptionRef(optionId);
+    };
   }, []);
 
   return (
-    <>
-      {isOpen && (
-        <S.List ref={listRef} role="listbox" id="select-box" aria-labelledby="select-button">
-          {children}
-        </S.List>
-      )}
-    </>
-  );
-}
-
-function Option({ value }: PropsWithChildren<OptionProps>) {
-  const optionRef = useRef<HTMLLIElement>(null);
-
-  const { closeSelect, selectOption, selectedOption } = useSelectContext();
-
-  const handleOptionClick = () => {
-    selectOption(value);
-    closeSelect();
-  };
-
-  return (
-    <S.Option isActive={value === selectedOption} ref={optionRef} onClick={handleOptionClick} role="option">
-      {value}
+    <S.Option ref={setOptionRef} onMouseOver={handleMouseOver} tabIndex={0} onClick={handleOptionClick} role="option">
+      {children}
     </S.Option>
   );
 }
 
-export default Object.assign(withSelectProvider(Select), { OriginSelect: Select, Trigger, List, Option });
+export default Object.assign(Select, { Trigger, List, Option });
