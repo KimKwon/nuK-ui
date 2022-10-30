@@ -35,7 +35,7 @@ describe('<Select />', () => {
 
     it('value가 제공되지 않았을 때 Trigger는 기본 텍스트를 보여줘야 한다.', () => {
       render(
-        <Select value={undefined} onChange={console.log}>
+        <Select value={undefined}>
           <Select.Trigger>Select Option!</Select.Trigger>
           <Select.List>
             {optionData.map((option, index) => (
@@ -139,7 +139,7 @@ describe('<Select />', () => {
   });
 
   describe('기타 인터랙션', () => {
-    it('옵션에 마우스를 올렸을 때 focus 상태가 된다.', async () => {
+    it('옵션에 마우스를 올렸을 때 focus 상태가 되어야 한다.', async () => {
       render(selectInterface);
       await userEvent.click(getTriggerButton());
 
@@ -154,6 +154,36 @@ describe('<Select />', () => {
       });
 
       expect(targetOption).toHaveFocus();
+    });
+
+    it('List가 열렸을 때 default로 선택된 Option에 focus 상태가 되어야 한다.', async () => {
+      render(selectInterface);
+      await userEvent.click(getTriggerButton());
+
+      expect(
+        getSpecificOption({
+          optionIndex: 0,
+        }),
+      ).toHaveFocus();
+    });
+
+    it('List가 열렸을 때 현재 선택된 Option에 focus 상태가 되어야 한다.', async () => {
+      render(selectInterface);
+      await userEvent.click(getTriggerButton());
+
+      await userEvent.click(
+        getSpecificOption({
+          optionIndex: 2,
+        }),
+      );
+
+      await userEvent.click(getTriggerButton());
+
+      expect(
+        getSpecificOption({
+          optionIndex: 2,
+        }),
+      ).toHaveFocus();
     });
   });
 });

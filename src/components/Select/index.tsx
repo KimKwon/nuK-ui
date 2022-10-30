@@ -23,9 +23,13 @@ const S = {
   `,
   Trigger: styled.button``,
   List: styled.ul`
-    position: absolute;
-    top: 0;
     padding: 0;
+    margin: 0;
+
+    position: absolute;
+    z-index: 9999;
+
+    margin-top: 0.25rem;
 
     display: flex;
     flex-direction: column;
@@ -56,6 +60,7 @@ const S = {
 
 interface SelectProps<T> {
   value?: T;
+  defaultValue?: T;
   onChange?: (value: T) => void;
   className?: string;
 }
@@ -179,6 +184,9 @@ function List({ children }: PropsWithChildren) {
       role="listbox"
       id="select-box"
       aria-labelledby="select-button"
+      aria-activedescendant={
+        context?.selectedOptionIndex !== null ? context?.optionRefList?.[context.selectedOptionIndex]?.id : undefined
+      }
     >
       {children}
     </S.List>
@@ -221,6 +229,12 @@ function Option({ optionIndex, value: optionValue, children, disabled }: PropsWi
   }, [context?.value, optionValue, optionIndex]);
 
   useEffect(() => {
+    if (context?.selectedOptionIndex === optionIndex) {
+      optionRef?.current.focus();
+    }
+  }, [context?.selectedOptionIndex, optionIndex, optionRef]);
+
+  useEffect(() => {
     if (optionRef?.current)
       applyOptionRef({
         id: optionId,
@@ -240,7 +254,15 @@ function Option({ optionIndex, value: optionValue, children, disabled }: PropsWi
   }, []);
 
   return (
-    <S.Option ref={setOptionRef} onMouseOver={handleMouseOver} tabIndex={0} onClick={handleOptionClick} role="option">
+    <S.Option
+      id={optionId}
+      aria-selected={context?.selectedOptionIndex === optionIndex}
+      ref={setOptionRef}
+      onMouseOver={handleMouseOver}
+      tabIndex={0}
+      onClick={handleOptionClick}
+      role="option"
+    >
       {children}
     </S.Option>
   );
