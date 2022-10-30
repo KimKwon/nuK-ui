@@ -7,7 +7,7 @@ function App() {
 
   return (
     <main>
-      <Select value={value} onChange={setValue}>
+      <Select value={undefined} onChange={console.log}>
         <Select.Trigger>옵션을 선택해주세요.</Select.Trigger>
         <Select.List>
           {options.map((option, index) => (

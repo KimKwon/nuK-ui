@@ -113,6 +113,27 @@ describe('<Select />', () => {
 
       expect(onChange).toHaveBeenCalledWith(optionData[2]);
     });
+
+    it('value가 undefined로 주어져도 해당 옵션으로 Trigger의 텍스트가 대치되어야 한다.', async () => {
+      render(
+        <Select value={undefined}>
+          <Select.Trigger>Select Option!</Select.Trigger>
+          <Select.List>
+            {optionData.map((option, index) => (
+              <Select.Option key={option} optionIndex={index} value={option} />
+            ))}
+          </Select.List>
+        </Select>,
+      );
+      await userEvent.click(getTriggerButton());
+      await userEvent.click(
+        getSpecificOption({
+          optionIndex: 1,
+        }),
+      );
+
+      expect(getTriggerButton()).toHaveTextContent(optionData[1]);
+    });
   });
 
   describe('기타 인터랙션', () => {

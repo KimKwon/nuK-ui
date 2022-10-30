@@ -9,6 +9,7 @@ import { SelectContext } from './contexts/context';
 import useCreateAction from './contexts/use-create-action';
 import { Actions } from './contexts/type';
 import { TestIds } from './__test__/util';
+import useInternalState from '../../hooks/use-internal-state';
 
 /**
  * ==============================
@@ -59,8 +60,15 @@ interface SelectProps<T> {
   className?: string;
 }
 
-function Select<T>({ children, className, onChange, value }: PropsWithChildren<SelectProps<T>>) {
+function Select<T>({
+  children,
+  className,
+  onChange: externalOnChange,
+  value: externalValue,
+}: PropsWithChildren<SelectProps<T>>) {
   const { state: StateContext, dispatch: DispatchContext } = SelectContext;
+
+  const [value, onChange] = useInternalState(externalValue, externalOnChange);
 
   const [state, dispatch] = useReducer(reducer, {
     value,
@@ -75,7 +83,11 @@ function Select<T>({ children, className, onChange, value }: PropsWithChildren<S
 
   const { listRef, triggerRef, isOpen } = state;
 
-  state.value = value;
+  const replaceWithoutRender = (value: T | undefined) => {
+    state.value = value;
+  };
+
+  replaceWithoutRender(value);
 
   useClickOutside(
     [listRef, triggerRef],
