@@ -1,6 +1,6 @@
 import { RefObject, useContext } from 'react';
 import { SelectContext } from './context';
-import { Actions, OptionRefInfo } from './type';
+import { Actions, MoveDirection, OptionRefInfo } from './type';
 
 function useCreateAction() {
   const dispatch = useContext(SelectContext.dispatch);
@@ -68,10 +68,21 @@ function useCreateAction() {
     });
   };
 
+  const moveOption = (direction: MoveDirection) => {
+    dispatch({
+      type: Actions.MOVE_OPTION,
+      payload: {
+        direction,
+      },
+    });
+  };
+
   return {
-    changeSelectOpenStatus,
+    closeSelectList: changeSelectOpenStatus(false),
+    openSelectList: changeSelectOpenStatus(false),
     toggleSelectOpenStatus,
     selectOption,
+    moveOption,
     applyListRef,
     applyTriggerRef,
     applyOptionRef,

@@ -27,6 +27,7 @@ export const Actions = {
   SET_OPEN: 'isOpen/set_open',
   TOGGLE_OPEN: 'isOpen/toggle_open',
   SELECT_OPTION: 'selectedOption/select_optionIndex',
+  MOVE_OPTION: 'selectedOption/move_option',
   APPLY_TRIGGER_REF: 'applyRef/triggerRef',
   APPLY_LIST_REF: 'applyRef/listRef',
   APPLY_OPTION_REF: 'optionRefList/apply_optionRef',
@@ -44,10 +45,16 @@ export type ActionMap = {
       };
 };
 
+export enum MoveDirection {
+  PREV,
+  NEXT,
+}
+
 export type PayloadsType = {
   [Actions.SET_OPEN]: { isOpen: boolean };
   [Actions.TOGGLE_OPEN]: undefined;
   [Actions.SELECT_OPTION]: { optionIndex: number };
+  [Actions.MOVE_OPTION]: { direction: MoveDirection };
   [Actions.APPLY_LIST_REF]: { ref: RefObject<HTMLUListElement> };
   [Actions.APPLY_TRIGGER_REF]: { ref: RefObject<HTMLButtonElement> };
   [Actions.APPLY_OPTION_REF]: OptionRefInfo;

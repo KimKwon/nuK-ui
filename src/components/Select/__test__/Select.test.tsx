@@ -78,7 +78,7 @@ describe('<Select />', () => {
       });
     });
 
-    it('옵션을 선택하면 List가 닫혀야 한다.', async () => {
+    it('Option을 선택하면 List가 닫혀야 한다.', async () => {
       render(selectInterface);
 
       await userEvent.click(getTriggerButton());
@@ -95,7 +95,7 @@ describe('<Select />', () => {
     });
   });
 
-  describe('옵션 선택 시', () => {
+  describe('Option 선택 시', () => {
     it('onChange 함수가 실행되어야 한다.', async () => {
       const onChange = jest.fn((value) => value);
       render(
@@ -138,7 +138,7 @@ describe('<Select />', () => {
     });
   });
 
-  describe('기타 인터랙션', () => {
+  describe('Focus 관련', () => {
     it('옵션에 마우스를 올렸을 때 focus 상태가 되어야 한다.', async () => {
       render(selectInterface);
       await userEvent.click(getTriggerButton());
@@ -184,6 +184,82 @@ describe('<Select />', () => {
           optionIndex: 2,
         }),
       ).toHaveFocus();
+    });
+  });
+
+  describe('키보드 인터랙션', () => {
+    it('키보드 아래 키를 통해 하단의 Option으로 focus 이동이 가능해야 한다.', async () => {
+      render(selectInterface);
+      await userEvent.click(getTriggerButton());
+
+      await userEvent.keyboard('{ArrowDown}');
+      expect(getSpecificOption({ optionIndex: 1 })).toHaveFocus();
+    });
+
+    it('키보드 위 키를 통해 상단의 Option으로 focus 이동이 가능해야 한다.', async () => {
+      render(
+        <Select defaultValue={optionData[1]}>
+          <Select.Trigger>Select Option!</Select.Trigger>
+          <Select.List>
+            {optionData.map((option, index) => (
+              <Select.Option key={option} optionIndex={index} value={option}>
+                {option}
+              </Select.Option>
+            ))}
+          </Select.List>
+        </Select>,
+      );
+      await userEvent.click(getTriggerButton());
+
+      await userEvent.keyboard('{ArrowUp}');
+      expect(getSpecificOption({ optionIndex: 0 })).toHaveFocus();
+    });
+
+    it('첫번째 Option이 선택 되어 있을 경우 키보드 위 키를 눌러도 아무 반응이 없어야 한다.', async () => {
+      render(selectInterface);
+      await userEvent.click(getTriggerButton());
+
+      await userEvent.keyboard('{ArrowUp}');
+      expect(getSpecificOption({ optionIndex: 0 })).toHaveFocus();
+    });
+
+    it('마지막 Option이 선택 되어 있을 경우 키보드 아래 키를 눌러도 아무 반응이 없어야 한다.', async () => {
+      render(
+        <Select defaultValue={optionData[2]}>
+          <Select.Trigger>Select Option!</Select.Trigger>
+          <Select.List>
+            {optionData.map((option, index) => (
+              <Select.Option key={option} optionIndex={index} value={option}>
+                {option}
+              </Select.Option>
+            ))}
+          </Select.List>
+        </Select>,
+      );
+      await userEvent.click(getTriggerButton());
+
+      await userEvent.keyboard('{ArrowDown}');
+      expect(getSpecificOption({ optionIndex: 2 })).toHaveFocus();
+    });
+
+    it('Space로 Option 선택이 가능해야 한다.', async () => {
+      render(selectInterface);
+      await userEvent.click(getTriggerButton());
+
+      await userEvent.keyboard('{ArrowDown}');
+      await userEvent.keyboard('{ }');
+
+      expect(getTriggerButton()).toHaveTextContent(optionData[1]);
+    });
+
+    it('Enter로 Option 선택이 가능해야 한다.', async () => {
+      render(selectInterface);
+      await userEvent.click(getTriggerButton());
+
+      await userEvent.keyboard('{ArrowDown}');
+      await userEvent.keyboard('{Enter}');
+
+      expect(getTriggerButton()).toHaveTextContent(optionData[1]);
     });
   });
 });

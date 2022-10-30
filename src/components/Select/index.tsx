@@ -7,7 +7,7 @@ import useSelectContext from './contexts/use-select-context';
 import useCallbackRef from '../../hooks/use-callback-ref';
 import { SelectContext } from './contexts/context';
 import useCreateAction from './contexts/use-create-action';
-import { Actions } from './contexts/type';
+import { Actions, MoveDirection } from './contexts/type';
 import { TestIds } from './__test__/util';
 import useInternalState from '../../hooks/use-internal-state';
 
@@ -21,7 +21,12 @@ const S = {
   Select: styled.div`
     position: relative;
   `,
-  Trigger: styled.button``,
+  Trigger: styled.button`
+    background-color: transparent;
+    &:focus {
+      background-color: red;
+    }
+  `,
   List: styled.ul`
     padding: 0;
     margin: 0;
@@ -158,16 +163,28 @@ function List({ children }: PropsWithChildren) {
   const [listRef, setListRef] = useCallbackRef<HTMLUListElement>();
 
   const context = useSelectContext();
-  const { applyListRef } = useCreateAction();
+  const { applyListRef, moveOption, closeSelectList } = useCreateAction();
 
   useEventListener(listRef?.current, 'keydown', (e) => {
     switch (e.key) {
+      case 'Enter':
+      case ' ':
+        if (context?.selectedOptionIndex !== null) {
+          context?.onChange?.(context?.optionRefList?.[context?.selectedOptionIndex].optionInfo.optionValue);
+        }
+        closeSelectList();
+        return;
       case 'ArrowDown':
+        if (context?.optionRefList && context?.selectedOptionIndex === context?.optionRefList?.length - 1) return;
+        moveOption(MoveDirection.NEXT);
         return;
       case 'ArrowUp':
+        if (context?.selectedOptionIndex === 0) return;
+        moveOption(MoveDirection.PREV);
         return;
       case 'Tab':
         e.preventDefault();
+        e.stopPropagation();
         return;
     }
   });
@@ -178,11 +195,11 @@ function List({ children }: PropsWithChildren) {
 
   return context?.isOpen ? (
     <S.List
+      ref={setListRef}
+      id="select-box"
       data-testid={TestIds.List}
       tabIndex={0}
-      ref={setListRef}
       role="listbox"
-      id="select-box"
       aria-labelledby="select-button"
       aria-activedescendant={
         context?.selectedOptionIndex !== null ? context?.optionRefList?.[context.selectedOptionIndex]?.id : undefined
@@ -210,16 +227,16 @@ function Option({ optionIndex, value: optionValue, children, disabled }: PropsWi
   const [optionRef, setOptionRef] = useCallbackRef<HTMLLIElement>();
 
   const context = useSelectContext();
-  const { changeSelectOpenStatus, selectOption, applyOptionRef, unapplyOptionRef } = useCreateAction();
+  const { closeSelectList, selectOption, applyOptionRef, unapplyOptionRef } = useCreateAction();
 
   const handleOptionClick = () => {
     selectOption(optionIndex);
-    changeSelectOpenStatus(false)();
+    closeSelectList();
     context?.onChange?.(optionValue);
   };
 
   const handleMouseOver = () => {
-    optionRef?.current?.focus();
+    selectOption(optionIndex);
   };
 
   useEffect(() => {
@@ -255,13 +272,13 @@ function Option({ optionIndex, value: optionValue, children, disabled }: PropsWi
 
   return (
     <S.Option
-      id={optionId}
-      aria-selected={context?.selectedOptionIndex === optionIndex}
       ref={setOptionRef}
+      id={optionId}
+      onClick={handleOptionClick}
       onMouseOver={handleMouseOver}
       tabIndex={0}
-      onClick={handleOptionClick}
       role="option"
+      aria-selected={context?.selectedOptionIndex === optionIndex}
     >
       {children}
     </S.Option>
