@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Select from './components/Select';
 
 function App() {
-  const options = ['김치찜', '신전떡볶이', '역전우동', '라면', '김밥', '낚지비빔밥'];
+  const options = ['김치찜', '신전떡볶이', '역전우동', '라면', '김밥', '낙지비빔밥'];
   const [value, setValue] = useState(options[0]);
 
   return (

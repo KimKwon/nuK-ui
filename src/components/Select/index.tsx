@@ -8,18 +8,7 @@ import useCallbackRef from '../../hooks/use-callback-ref';
 import { SelectContext } from './contexts/context';
 import useCreateAction from './contexts/use-create-action';
 import { Actions } from './contexts/type';
-
-interface SelectProps<T> {
-  value?: T;
-  onChange?: (value: T) => void;
-  className?: string;
-}
-
-interface OptionProps {
-  value: unknown;
-  disabled?: boolean;
-  optionIndex: number;
-}
+import { TestIds } from './__test__/util';
 
 /**
  * ==============================
@@ -60,15 +49,15 @@ const S = {
 
 /**
  * ==============================
- * SelectContext
- * ==============================
- */
-
-/**
- * ==============================
  * Select
  * ==============================
  */
+
+interface SelectProps<T> {
+  value?: T;
+  onChange?: (value: T) => void;
+  className?: string;
+}
 
 function Select<T>({ children, className, onChange, value }: PropsWithChildren<SelectProps<T>>) {
   const { state: StateContext, dispatch: DispatchContext } = SelectContext;
@@ -127,7 +116,15 @@ function Trigger({ children }: PropsWithChildren) {
   }, []);
 
   return (
-    <S.Trigger ref={triggerRef} type="button" onClick={toggleSelectOpenStatus} aria-haspopup aria-expanded aria-controls="select-button">
+    <S.Trigger
+      ref={triggerRef}
+      data-testid={TestIds.Trigger}
+      type="button"
+      onClick={toggleSelectOpenStatus}
+      aria-haspopup
+      aria-expanded
+      aria-controls="select-button"
+    >
       {context?.value ? <>{context?.value}</> : children}
     </S.Trigger>
   );
@@ -162,7 +159,14 @@ function List({ children }: PropsWithChildren) {
   }, [listRef]);
 
   return context?.isOpen ? (
-    <S.List tabIndex={0} ref={setListRef} role="listbox" id="select-box" aria-labelledby="select-button">
+    <S.List
+      data-testid={TestIds.List}
+      tabIndex={0}
+      ref={setListRef}
+      role="listbox"
+      id="select-box"
+      aria-labelledby="select-button"
+    >
       {children}
     </S.List>
   ) : null;
@@ -173,6 +177,12 @@ function List({ children }: PropsWithChildren) {
  * Option
  * ==============================
  */
+
+interface OptionProps {
+  value: unknown;
+  disabled?: boolean;
+  optionIndex: number;
+}
 
 function Option({ optionIndex, value: optionValue, children, disabled }: PropsWithChildren<OptionProps>) {
   const optionId = useId();
