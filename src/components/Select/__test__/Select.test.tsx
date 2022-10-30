@@ -6,18 +6,20 @@ import { checkSelectList, getSpecificOption, getTriggerButton, queryAllOption, q
 describe('<Select />', () => {
   const optionData = ['옵션1', '옵션2', '옵션3'];
   const selectInterface = (
-    <Select value={optionData[0]} onChange={console.log}>
+    <Select defaultValue={optionData[0]}>
       <Select.Trigger>Select Option!</Select.Trigger>
       <Select.List>
         {optionData.map((option, index) => (
-          <Select.Option key={option} optionIndex={index} value={option} />
+          <Select.Option key={option} optionIndex={index} value={option}>
+            {option}
+          </Select.Option>
         ))}
       </Select.List>
     </Select>
   );
 
   describe('첫 렌더링 시', () => {
-    it('props로 제공된 value와 Trigger의 텍스트와 일치해야 한다.', () => {
+    it('props로 제공된 defaultValue와 Trigger의 텍스트와 일치해야 한다.', () => {
       render(selectInterface);
 
       expect(getTriggerButton()).toHaveTextContent(optionData[0]);

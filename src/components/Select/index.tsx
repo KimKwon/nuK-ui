@@ -65,10 +65,11 @@ function Select<T>({
   className,
   onChange: externalOnChange,
   value: externalValue,
+  defaultValue,
 }: PropsWithChildren<SelectProps<T>>) {
   const { state: StateContext, dispatch: DispatchContext } = SelectContext;
 
-  const [value, onChange] = useInternalState(externalValue, externalOnChange);
+  const [value, onChange] = useInternalState(externalValue, externalOnChange, defaultValue);
 
   const [state, dispatch] = useReducer(reducer, {
     value,
@@ -212,6 +213,12 @@ function Option({ optionIndex, value: optionValue, children, disabled }: PropsWi
   const handleMouseOver = () => {
     optionRef?.current?.focus();
   };
+
+  useEffect(() => {
+    if (context?.value === optionValue) {
+      selectOption(optionIndex);
+    }
+  }, [context?.value, optionValue, optionIndex]);
 
   useEffect(() => {
     if (optionRef?.current)

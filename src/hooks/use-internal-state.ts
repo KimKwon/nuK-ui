@@ -3,8 +3,9 @@ import { useCallback, useState } from 'react';
 function useInternalState<T>(
   externalState: T | undefined,
   onChange?: (nextValue: T) => void,
+  defaultValue?: T,
 ): [T | undefined, (nextValue: T) => void] {
-  const [internalState, setInternalState] = useState(externalState);
+  const [internalState, setInternalState] = useState(defaultValue);
 
   const isUsingInternalState = useCallback(() => externalState === undefined, [externalState]);
 
