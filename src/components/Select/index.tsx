@@ -38,7 +38,6 @@ const S = {
 
     display: flex;
     flex-direction: column;
-    gap: 10px;
 
     background-color: white;
     border: 1px solid black;
@@ -47,6 +46,7 @@ const S = {
   Option: styled.li`
     all: unset;
 
+    padding: 5px;
     &:focus {
       background-color: red;
     }
@@ -148,7 +148,7 @@ function Trigger({ children }: PropsWithChildren) {
       aria-expanded
       aria-controls="select-button"
     >
-      {context?.value ? <>{context?.value}</> : children}
+      {context.value !== undefined ? <>{context.value}</> : children}
     </S.Trigger>
   );
 }
@@ -169,17 +169,17 @@ function List({ children }: PropsWithChildren) {
     switch (e.key) {
       case 'Enter':
       case ' ':
-        if (context?.selectedOptionIndex !== null) {
-          context?.onChange?.(context?.optionRefList?.[context?.selectedOptionIndex].optionInfo.optionValue);
+        if (context.selectedOptionIndex !== null) {
+          context.onChange?.(context.optionRefList[context.selectedOptionIndex].optionInfo.optionValue);
         }
         closeSelectList();
         return;
       case 'ArrowDown':
-        if (context?.optionRefList && context?.selectedOptionIndex === context?.optionRefList?.length - 1) return;
+        if (context.optionRefList && context.selectedOptionIndex === context.optionRefList.length - 1) return;
         moveOption(MoveDirection.NEXT);
         return;
       case 'ArrowUp':
-        if (context?.selectedOptionIndex === 0) return;
+        if (context.selectedOptionIndex === 0) return;
         moveOption(MoveDirection.PREV);
         return;
       case 'Tab':
@@ -193,7 +193,7 @@ function List({ children }: PropsWithChildren) {
     if (listRef?.current) applyListRef(listRef);
   }, [listRef]);
 
-  return context?.isOpen ? (
+  return context.isOpen ? (
     <S.List
       ref={setListRef}
       id="select-box"
@@ -202,7 +202,7 @@ function List({ children }: PropsWithChildren) {
       role="listbox"
       aria-labelledby="select-button"
       aria-activedescendant={
-        context?.selectedOptionIndex !== null ? context?.optionRefList?.[context.selectedOptionIndex]?.id : undefined
+        context.selectedOptionIndex !== null ? context.optionRefList[context.selectedOptionIndex]?.id : undefined
       }
     >
       {children}
@@ -232,7 +232,7 @@ function Option({ optionIndex, value: optionValue, children, disabled }: PropsWi
   const handleOptionClick = () => {
     selectOption(optionIndex);
     closeSelectList();
-    context?.onChange?.(optionValue);
+    context.onChange?.(optionValue);
   };
 
   const handleMouseOver = () => {
@@ -240,16 +240,16 @@ function Option({ optionIndex, value: optionValue, children, disabled }: PropsWi
   };
 
   useEffect(() => {
-    if (context?.value === optionValue) {
+    if (context.value === optionValue) {
       selectOption(optionIndex);
     }
-  }, [context?.value, optionValue, optionIndex]);
+  }, [context.value, optionValue, optionIndex]);
 
   useEffect(() => {
-    if (context?.selectedOptionIndex === optionIndex) {
+    if (context.selectedOptionIndex === optionIndex) {
       optionRef?.current.focus();
     }
-  }, [context?.selectedOptionIndex, optionIndex, optionRef]);
+  }, [context.selectedOptionIndex, optionIndex, optionRef]);
 
   useEffect(() => {
     if (optionRef?.current)
@@ -278,7 +278,7 @@ function Option({ optionIndex, value: optionValue, children, disabled }: PropsWi
       onMouseOver={handleMouseOver}
       tabIndex={0}
       role="option"
-      aria-selected={context?.selectedOptionIndex === optionIndex}
+      aria-selected={context.selectedOptionIndex === optionIndex}
     >
       {children}
     </S.Option>
