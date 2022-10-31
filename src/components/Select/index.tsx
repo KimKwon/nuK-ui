@@ -109,6 +109,8 @@ function Select<T>({
           isOpen: false,
         },
       });
+
+      state.triggerRef?.current?.focus();
     },
     isOpen,
   );
@@ -166,13 +168,19 @@ function List({ children }: PropsWithChildren) {
   const { applyListRef, moveOption, closeSelectList } = useCreateAction();
 
   useEventListener(listRef?.current, 'keydown', (e) => {
+    const stopDefault = () => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
     switch (e.key) {
       case 'Enter':
       case ' ':
+        stopDefault();
         if (context.selectedOptionIndex !== null) {
           context.onChange?.(context.optionRefList[context.selectedOptionIndex].optionInfo.optionValue);
         }
         closeSelectList();
+        context.triggerRef?.current?.focus();
         return;
       case 'ArrowDown':
         if (context.optionRefList && context.selectedOptionIndex === context.optionRefList.length - 1) return;
@@ -182,9 +190,12 @@ function List({ children }: PropsWithChildren) {
         if (context.selectedOptionIndex === 0) return;
         moveOption(MoveDirection.PREV);
         return;
+      case 'Escape':
+        closeSelectList();
+        context.triggerRef?.current?.focus();
+        return;
       case 'Tab':
-        e.preventDefault();
-        e.stopPropagation();
+        stopDefault();
         return;
     }
   });
