@@ -22,15 +22,6 @@ function useCreateAction() {
     });
   };
 
-  const selectOption = (optionIndex: number) => {
-    dispatch({
-      type: Actions.SELECT_OPTION,
-      payload: {
-        optionIndex,
-      },
-    });
-  };
-
   const applyListRef = (ref: RefObject<HTMLUListElement>) => {
     dispatch({
       type: Actions.APPLY_LIST_REF,
@@ -68,11 +59,12 @@ function useCreateAction() {
     });
   };
 
-  const moveOption = (direction: MoveDirection) => {
+  const moveOption = (direction: MoveDirection, to?: number) => {
     dispatch({
       type: Actions.MOVE_OPTION,
       payload: {
         direction,
+        to,
       },
     });
   };
@@ -81,7 +73,6 @@ function useCreateAction() {
     closeSelectList: changeSelectOpenStatus(false),
     openSelectList: changeSelectOpenStatus(false),
     toggleSelectOpenStatus,
-    selectOption,
     moveOption,
     applyListRef,
     applyTriggerRef,

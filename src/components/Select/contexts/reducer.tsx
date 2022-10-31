@@ -3,15 +3,13 @@ import { Actions, ActionType, SelectContextType } from './type';
 
 export function reducer(state: SelectContextType, action: ActionType) {
   switch (action.type) {
-    case Actions.SELECT_OPTION: {
-      return { ...state, selectedOptionIndex: action.payload.optionIndex };
-    }
     case Actions.MOVE_OPTION: {
-      const { direction } = action.payload;
+      const { direction, to } = action.payload;
       const targetIndex = calcSelectIndex({
         optionList: state.optionRefList,
         direction,
         currentSelectedIndex: state.selectedOptionIndex,
+        to,
       });
 
       if (targetIndex === null) return state;
@@ -19,10 +17,10 @@ export function reducer(state: SelectContextType, action: ActionType) {
       return { ...state, selectedOptionIndex: targetIndex };
     }
     case Actions.TOGGLE_OPEN: {
-      return { ...state, isOpen: !state.isOpen };
+      return { ...state, isOpen: !state.isOpen, selectedOptionIndex: null };
     }
     case Actions.SET_OPEN: {
-      return { ...state, isOpen: action.payload.isOpen };
+      return { ...state, isOpen: action.payload.isOpen, selectedOptionIndex: null };
     }
     case Actions.APPLY_TRIGGER_REF: {
       return { ...state, triggerRef: action.payload.ref };

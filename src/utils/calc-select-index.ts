@@ -1,8 +1,7 @@
-import { MoveDirection, OptionRefInfo } from '../components/Select/contexts/type';
+import { DirectionInfo, MoveDirection, OptionRefInfo } from '../components/Select/contexts/type';
 
 interface IndexCalculateInfo {
   optionList: OptionRefInfo[];
-  direction: MoveDirection;
   currentSelectedIndex: number | null;
 }
 
@@ -10,9 +9,17 @@ function getOriginIndexFromReversed(reversedIndex: number, length: number) {
   return length - reversedIndex - 1;
 }
 
-export function calcSelectIndex({ optionList, direction, currentSelectedIndex }: IndexCalculateInfo) {
+export function calcSelectIndex({
+  optionList,
+  currentSelectedIndex,
+  direction,
+  to,
+}: IndexCalculateInfo & DirectionInfo) {
   const optionLength = optionList.length;
-  if (optionLength === 0 || currentSelectedIndex === null) return null;
+
+  if (optionLength === 0) return null;
+  if (currentSelectedIndex === null && to !== undefined) return to;
+  if (currentSelectedIndex === null) return 0;
 
   switch (direction) {
     case MoveDirection.NEXT: {
@@ -33,6 +40,17 @@ export function calcSelectIndex({ optionList, direction, currentSelectedIndex }:
         });
 
       return prevIndex < 0 ? currentSelectedIndex : getOriginIndexFromReversed(prevIndex, optionLength);
+    }
+    case MoveDirection.FIRST: {
+      return 0;
+    }
+    case MoveDirection.LAST: {
+      return optionLength - 1;
+    }
+    case MoveDirection.TARGET: {
+      if (to === undefined) return null;
+
+      return to;
     }
     default:
       return null;

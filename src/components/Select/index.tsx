@@ -1,7 +1,6 @@
-import { PropsWithChildren, useEffect, useId, useReducer, useRef } from 'react';
-import styled from 'styled-components';
+import { KeyboardEvent, PropsWithChildren, useEffect, useId, useReducer, useRef } from 'react';
+import styled, { css } from 'styled-components';
 import useClickOutside from '../../hooks/use-click-outside';
-import useEventListener from '../../hooks/use-event-listener';
 import { reducer } from './contexts/reducer';
 import useSelectContext from './contexts/use-select-context';
 import useCallbackRef from '../../hooks/use-callback-ref';
@@ -43,10 +42,11 @@ const S = {
     border: 1px solid black;
     box-shadow: 3px 3px 3px 3px rgba(0, 0, 0, 0.3);
   `,
-  Option: styled.li`
+  Option: styled.li<{ selected: boolean }>`
     all: unset;
 
     padding: 5px;
+    padding-left: 30px;
     &:focus {
       background-color: red;
     }
@@ -54,6 +54,15 @@ const S = {
     &:hover {
       cursor: pointer;
     }
+
+    ${({ selected }) =>
+      selected &&
+      css`
+        padding-left: 0px;
+        &::before {
+          content: '✅';
+        }
+      `};
   `,
 };
 
@@ -84,7 +93,6 @@ function Select<T>({
   const [state, dispatch] = useReducer(reducer, {
     value,
     isOpen: false,
-    optionList: [],
     selectedOptionIndex: null,
     onChange: onChange as any,
     listRef: null,
@@ -92,7 +100,7 @@ function Select<T>({
     optionRefList: [],
   });
 
-  const { listRef, triggerRef, isOpen } = state;
+  const { listRef, triggerRef, isOpen, selectedOptionIndex } = state;
 
   const replaceWithoutRender = (value: T | undefined) => {
     state.value = value;
@@ -110,10 +118,21 @@ function Select<T>({
         },
       });
 
-      state.triggerRef?.current?.focus();
+      triggerRef?.current?.focus();
     },
     isOpen,
   );
+
+  useEffect(() => {
+    if (selectedOptionIndex !== null) return;
+
+    dispatch({
+      type: Actions.MOVE_OPTION,
+      payload: {
+        direction: MoveDirection.FIRST,
+      },
+    });
+  }, [selectedOptionIndex]);
 
   return (
     <StateContext.Provider value={state}>
@@ -136,6 +155,11 @@ function Trigger({ children }: PropsWithChildren) {
   const { toggleSelectOpenStatus, applyTriggerRef } = useCreateAction();
   const context = useSelectContext();
 
+  const handleKeyDown = (e: KeyboardEvent) => {
+    switch (e.key) {
+    }
+  };
+
   useEffect(() => {
     if (triggerRef.current) applyTriggerRef(triggerRef);
   }, []);
@@ -145,6 +169,7 @@ function Trigger({ children }: PropsWithChildren) {
       ref={triggerRef}
       data-testid={TestIds.Trigger}
       type="button"
+      onKeyDown={handleKeyDown}
       onClick={toggleSelectOpenStatus}
       aria-haspopup
       aria-expanded
@@ -164,10 +189,10 @@ function Trigger({ children }: PropsWithChildren) {
 function List({ children }: PropsWithChildren) {
   const [listRef, setListRef] = useCallbackRef<HTMLUListElement>();
 
-  const context = useSelectContext();
+  const { isOpen, selectedOptionIndex, onChange, optionRefList, triggerRef, value } = useSelectContext();
   const { applyListRef, moveOption, closeSelectList } = useCreateAction();
 
-  useEventListener(listRef?.current, 'keydown', (e) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     const stopDefault = () => {
       e.preventDefault();
       e.stopPropagation();
@@ -176,45 +201,57 @@ function List({ children }: PropsWithChildren) {
       case 'Enter':
       case ' ':
         stopDefault();
-        if (context.selectedOptionIndex !== null) {
-          context.onChange?.(context.optionRefList[context.selectedOptionIndex].optionInfo.optionValue);
+        if (selectedOptionIndex !== null) {
+          onChange?.(optionRefList[selectedOptionIndex].optionInfo.optionValue);
         }
         closeSelectList();
-        context.triggerRef?.current?.focus();
+        triggerRef?.current?.focus();
         return;
       case 'ArrowDown':
-        if (context.optionRefList && context.selectedOptionIndex === context.optionRefList.length - 1) return;
+        if (optionRefList && selectedOptionIndex === optionRefList.length - 1) return;
         moveOption(MoveDirection.NEXT);
         return;
       case 'ArrowUp':
-        if (context.selectedOptionIndex === 0) return;
+        if (selectedOptionIndex === 0) return;
         moveOption(MoveDirection.PREV);
         return;
       case 'Escape':
         closeSelectList();
-        context.triggerRef?.current?.focus();
+        triggerRef?.current?.focus();
         return;
       case 'Tab':
         stopDefault();
         return;
+      default:
+        return;
     }
-  });
+  };
+
+  useEffect(() => {
+    if (isOpen && selectedOptionIndex === null && optionRefList.length > 0) {
+      const currentSelectedIndex = optionRefList.findIndex(({ optionInfo: { optionValue } }) => optionValue === value);
+      if (currentSelectedIndex < 0) {
+        moveOption(MoveDirection.FIRST);
+        return;
+      }
+      moveOption(MoveDirection.TARGET, currentSelectedIndex);
+    }
+  }, [isOpen, selectedOptionIndex, optionRefList, value]);
 
   useEffect(() => {
     if (listRef?.current) applyListRef(listRef);
   }, [listRef]);
 
-  return context.isOpen ? (
+  return isOpen ? (
     <S.List
       ref={setListRef}
       id="select-box"
+      onKeyDown={handleKeyDown}
       data-testid={TestIds.List}
       tabIndex={0}
       role="listbox"
       aria-labelledby="select-button"
-      aria-activedescendant={
-        context.selectedOptionIndex !== null ? context.optionRefList[context.selectedOptionIndex]?.id : undefined
-      }
+      aria-activedescendant={selectedOptionIndex !== null ? optionRefList[selectedOptionIndex]?.id : undefined}
     >
       {children}
     </S.List>
@@ -237,30 +274,32 @@ function Option({ optionIndex, value: optionValue, children, disabled }: PropsWi
   const optionId = useId();
   const [optionRef, setOptionRef] = useCallbackRef<HTMLLIElement>();
 
-  const context = useSelectContext();
-  const { closeSelectList, selectOption, applyOptionRef, unapplyOptionRef } = useCreateAction();
+  const { value, triggerRef, onChange, selectedOptionIndex } = useSelectContext();
+  const { closeSelectList, moveOption, applyOptionRef, unapplyOptionRef } = useCreateAction();
 
   const handleOptionClick = () => {
-    selectOption(optionIndex);
+    moveOption(MoveDirection.TARGET, optionIndex);
+
     closeSelectList();
-    context.onChange?.(optionValue);
+    onChange?.(optionValue);
+    triggerRef?.current?.focus();
   };
 
   const handleMouseOver = () => {
-    selectOption(optionIndex);
+    moveOption(MoveDirection.TARGET, optionIndex);
   };
 
   useEffect(() => {
-    if (context.value === optionValue) {
-      selectOption(optionIndex);
-    }
-  }, [context.value, optionValue, optionIndex]);
-
-  useEffect(() => {
-    if (context.selectedOptionIndex === optionIndex) {
+    if (value === optionValue) {
       optionRef?.current.focus();
     }
-  }, [context.selectedOptionIndex, optionIndex, optionRef]);
+  }, [value, optionValue, optionIndex, optionRef]);
+
+  useEffect(() => {
+    if (selectedOptionIndex === optionIndex) {
+      optionRef?.current.focus();
+    }
+  }, [selectedOptionIndex, optionIndex, optionRef]);
 
   useEffect(() => {
     if (optionRef?.current)
@@ -289,7 +328,8 @@ function Option({ optionIndex, value: optionValue, children, disabled }: PropsWi
       onMouseOver={handleMouseOver}
       tabIndex={0}
       role="option"
-      aria-selected={context.selectedOptionIndex === optionIndex}
+      aria-selected={value === optionValue}
+      selected={value === optionValue}
     >
       {children}
     </S.Option>
