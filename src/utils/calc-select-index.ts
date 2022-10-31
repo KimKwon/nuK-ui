@@ -19,10 +19,10 @@ export function calcSelectIndex({
 
   if (optionLength === 0) return null;
   if (currentSelectedIndex === null && to !== undefined) return to;
-  if (currentSelectedIndex === null) return 0;
 
   switch (direction) {
     case MoveDirection.NEXT: {
+      if (currentSelectedIndex === null) return null;
       const nextIndex = optionList.slice(currentSelectedIndex + 1).findIndex((option) => {
         return !option.optionInfo.disabled;
       });
@@ -30,6 +30,7 @@ export function calcSelectIndex({
       return nextIndex < 0 ? currentSelectedIndex : nextIndex + currentSelectedIndex + 1;
     }
     case MoveDirection.PREV: {
+      if (currentSelectedIndex === null) return null;
       const prevIndex = optionList
         .slice()
         .reverse()

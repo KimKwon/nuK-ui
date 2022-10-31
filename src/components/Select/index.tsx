@@ -100,7 +100,7 @@ function Select<T>({
     optionRefList: [],
   });
 
-  const { listRef, triggerRef, isOpen, selectedOptionIndex } = state;
+  const { listRef, triggerRef, isOpen } = state;
 
   const replaceWithoutRender = (value: T | undefined) => {
     state.value = value;
@@ -123,17 +123,6 @@ function Select<T>({
     isOpen,
   );
 
-  useEffect(() => {
-    if (selectedOptionIndex !== null) return;
-
-    dispatch({
-      type: Actions.MOVE_OPTION,
-      payload: {
-        direction: MoveDirection.FIRST,
-      },
-    });
-  }, [selectedOptionIndex]);
-
   return (
     <StateContext.Provider value={state}>
       <DispatchContext.Provider value={dispatch}>
@@ -152,11 +141,44 @@ function Select<T>({
 function Trigger({ children }: PropsWithChildren) {
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const { toggleSelectOpenStatus, applyTriggerRef } = useCreateAction();
-  const context = useSelectContext();
+  const { toggleSelectOpenStatus, applyTriggerRef, openSelectList, moveOption } = useCreateAction();
+  const { value, isOpen, selectedOptionIndex } = useSelectContext();
+
+  const handleClick = () => {
+    toggleSelectOpenStatus();
+    if (value === undefined && selectedOptionIndex === null && !isOpen) {
+      requestAnimationFrame(() => {
+        moveOption(MoveDirection.FIRST);
+      });
+    }
+  };
 
   const handleKeyDown = (e: KeyboardEvent) => {
+    const stopDefault = () => {
+      e.stopPropagation();
+      e.preventDefault();
+    };
     switch (e.key) {
+      case 'ArrowDown':
+        stopDefault();
+        openSelectList();
+        if (value === undefined) {
+          requestAnimationFrame(() => {
+            moveOption(MoveDirection.FIRST);
+          });
+        }
+        return;
+      case 'ArrowUp':
+        stopDefault();
+        openSelectList();
+        if (value === undefined) {
+          requestAnimationFrame(() => {
+            moveOption(MoveDirection.LAST);
+          });
+        }
+        return;
+      default:
+        return;
     }
   };
 
@@ -170,12 +192,12 @@ function Trigger({ children }: PropsWithChildren) {
       data-testid={TestIds.Trigger}
       type="button"
       onKeyDown={handleKeyDown}
-      onClick={toggleSelectOpenStatus}
+      onClick={handleClick}
       aria-haspopup
       aria-expanded
       aria-controls="select-button"
     >
-      {context.value !== undefined ? <>{context.value}</> : children}
+      {value !== undefined ? <>{value}</> : children}
     </S.Trigger>
   );
 }
@@ -231,9 +253,9 @@ function List({ children }: PropsWithChildren) {
     if (isOpen && selectedOptionIndex === null && optionRefList.length > 0) {
       const currentSelectedIndex = optionRefList.findIndex(({ optionInfo: { optionValue } }) => optionValue === value);
       if (currentSelectedIndex < 0) {
-        moveOption(MoveDirection.FIRST);
         return;
       }
+
       moveOption(MoveDirection.TARGET, currentSelectedIndex);
     }
   }, [isOpen, selectedOptionIndex, optionRefList, value]);
@@ -288,12 +310,6 @@ function Option({ optionIndex, value: optionValue, children, disabled }: PropsWi
   const handleMouseOver = () => {
     moveOption(MoveDirection.TARGET, optionIndex);
   };
-
-  useEffect(() => {
-    if (value === optionValue) {
-      optionRef?.current.focus();
-    }
-  }, [value, optionValue, optionIndex, optionRef]);
 
   useEffect(() => {
     if (selectedOptionIndex === optionIndex) {

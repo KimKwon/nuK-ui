@@ -71,7 +71,7 @@ function useCreateAction() {
 
   return {
     closeSelectList: changeSelectOpenStatus(false),
-    openSelectList: changeSelectOpenStatus(false),
+    openSelectList: changeSelectOpenStatus(true),
     toggleSelectOpenStatus,
     moveOption,
     applyListRef,

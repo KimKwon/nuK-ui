@@ -17,7 +17,7 @@ export function reducer(state: SelectContextType, action: ActionType) {
       return { ...state, selectedOptionIndex: targetIndex };
     }
     case Actions.TOGGLE_OPEN: {
-      return { ...state, isOpen: !state.isOpen, selectedOptionIndex: null };
+      return { ...state, isOpen: !state.isOpen };
     }
     case Actions.SET_OPEN: {
       return { ...state, isOpen: action.payload.isOpen, selectedOptionIndex: null };

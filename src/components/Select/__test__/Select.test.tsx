@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Select from '..';
 import { checkSelectList, getSpecificOption, getTriggerButton, queryAllOption, querySelectList } from './util';
@@ -33,9 +33,9 @@ describe('<Select />', () => {
       });
     });
 
-    it('value가 제공되지 않았을 때 Trigger는 기본 텍스트를 보여줘야 한다.', () => {
+    it('defaultValue가 제공되지 않았을 때 Trigger는 기본 텍스트를 보여줘야 한다.', () => {
       render(
-        <Select value={undefined}>
+        <Select>
           <Select.Trigger>Select Option!</Select.Trigger>
           <Select.List>
             {optionData.map((option, index) => (
@@ -91,6 +91,17 @@ describe('<Select />', () => {
 
       checkSelectList({
         shouldExist: false,
+      });
+    });
+
+    it('Trigger에 focus 되었을 때 방향키로 List를 열 수 있어야 한다.', async () => {
+      render(selectInterface);
+      await userEvent.click(getTriggerButton());
+      await userEvent.click(getTriggerButton());
+
+      await userEvent.keyboard('{ArrowDown}');
+      checkSelectList({
+        shouldExist: true,
       });
     });
   });
@@ -184,6 +195,26 @@ describe('<Select />', () => {
           optionIndex: 2,
         }),
       ).toHaveFocus();
+    });
+
+    it('현재 선택된 Option이 없을 때 Trigger 클릭으로 List가 열렸을 경우 첫번째 Option에 focus 되어야 한다.', async () => {
+      render(
+        <Select>
+          <Select.Trigger>Select Option!</Select.Trigger>
+          <Select.List>
+            {optionData.map((option, index) => (
+              <Select.Option key={option} optionIndex={index} value={option}>
+                {option}
+              </Select.Option>
+            ))}
+          </Select.List>
+        </Select>,
+      );
+
+      await userEvent.click(getTriggerButton());
+      await waitFor(() => {
+        expect(getSpecificOption({ optionIndex: 0 })).toHaveFocus();
+      });
     });
   });
 
