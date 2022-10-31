@@ -23,11 +23,14 @@ export function calcSelectIndex({ optionList, direction, currentSelectedIndex }:
       return nextIndex < 0 ? currentSelectedIndex : nextIndex + currentSelectedIndex + 1;
     }
     case MoveDirection.PREV: {
-      const prevIndex = optionList.reverse().findIndex((option, index) => {
-        if (currentSelectedIndex <= getOriginIndexFromReversed(index, optionLength)) return false;
+      const prevIndex = optionList
+        .slice()
+        .reverse()
+        .findIndex((option, index) => {
+          if (currentSelectedIndex <= getOriginIndexFromReversed(index, optionLength)) return false;
 
-        return !option.optionInfo.disabled;
-      });
+          return !option.optionInfo.disabled;
+        });
 
       return prevIndex < 0 ? currentSelectedIndex : getOriginIndexFromReversed(prevIndex, optionLength);
     }
