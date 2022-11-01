@@ -1,26 +1,26 @@
-import { calcSelectIndex } from '../../../utils/calc-select-index';
+import { calcFocusIndex } from '../../../utils/calc-focus-index';
 import { Actions, ActionType, SelectContextType } from './type';
 
 export function reducer(state: SelectContextType, action: ActionType) {
   switch (action.type) {
     case Actions.MOVE_OPTION: {
       const { direction, to } = action.payload;
-      const targetIndex = calcSelectIndex({
+      const targetIndex = calcFocusIndex({
         optionList: state.optionRefList,
         direction,
-        currentSelectedIndex: state.selectedOptionIndex,
+        currentFocusedIndex: state.focusedOptionIndex,
         to,
       });
 
       if (targetIndex === null) return state;
 
-      return { ...state, selectedOptionIndex: targetIndex };
+      return { ...state, focusedOptionIndex: targetIndex };
     }
     case Actions.TOGGLE_OPEN: {
       return { ...state, isOpen: !state.isOpen };
     }
     case Actions.SET_OPEN: {
-      return { ...state, isOpen: action.payload.isOpen, selectedOptionIndex: null };
+      return { ...state, isOpen: action.payload.isOpen, focusedOptionIndex: null };
     }
     case Actions.APPLY_TRIGGER_REF: {
       return { ...state, triggerRef: action.payload.ref };

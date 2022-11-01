@@ -4,7 +4,7 @@ export type SelectDispatch = Dispatch<ActionType>;
 
 export interface SelectContextType {
   isOpen: boolean;
-  selectedOptionIndex: number | null;
+  focusedOptionIndex: number | null;
   value?: unknown;
   onChange?: (value: unknown) => void;
   listRef: RefObject<HTMLUListElement> | null;

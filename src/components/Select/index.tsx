@@ -94,7 +94,7 @@ function Select<T>({
   const [state, dispatch] = useReducer(reducer, {
     value,
     isOpen: false,
-    selectedOptionIndex: null,
+    focusedOptionIndex: null,
     onChange: onChange as any,
     listRef: null,
     triggerRef: null,
@@ -147,11 +147,11 @@ function Trigger({ children, as }: PropsWithChildren<TriggerProps>) {
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const { toggleSelectOpenStatus, applyTriggerRef, openSelectList, moveOption } = useCreateAction();
-  const { value, isOpen, selectedOptionIndex } = useSelectContext();
+  const { value, isOpen, focusedOptionIndex } = useSelectContext();
 
   const handleClick = () => {
     toggleSelectOpenStatus();
-    if (value === undefined && selectedOptionIndex === null && !isOpen) {
+    if (value === undefined && focusedOptionIndex === null && !isOpen) {
       requestAnimationFrame(() => {
         moveOption(MoveDirection.FIRST);
       });
@@ -219,7 +219,7 @@ function Trigger({ children, as }: PropsWithChildren<TriggerProps>) {
 function List({ children }: PropsWithChildren) {
   const [listRef, setListRef] = useCallbackRef<HTMLUListElement>();
 
-  const { isOpen, selectedOptionIndex, onChange, optionRefList, triggerRef, value } = useSelectContext();
+  const { isOpen, focusedOptionIndex, onChange, optionRefList, triggerRef, value } = useSelectContext();
   const { applyListRef, moveOption, closeSelectList } = useCreateAction();
 
   const handleKeyDown = (e: KeyboardEvent) => {
@@ -231,18 +231,18 @@ function List({ children }: PropsWithChildren) {
       case 'Enter':
       case ' ':
         stopDefault();
-        if (selectedOptionIndex !== null) {
-          onChange?.(optionRefList[selectedOptionIndex].optionInfo.optionValue);
+        if (focusedOptionIndex !== null) {
+          onChange?.(optionRefList[focusedOptionIndex].optionInfo.optionValue);
         }
         closeSelectList();
         triggerRef?.current?.focus();
         return;
       case 'ArrowDown':
-        if (optionRefList && selectedOptionIndex === optionRefList.length - 1) return;
+        if (optionRefList && focusedOptionIndex === optionRefList.length - 1) return;
         moveOption(MoveDirection.NEXT);
         return;
       case 'ArrowUp':
-        if (selectedOptionIndex === 0) return;
+        if (focusedOptionIndex === 0) return;
         moveOption(MoveDirection.PREV);
         return;
       case 'Escape':
@@ -258,7 +258,7 @@ function List({ children }: PropsWithChildren) {
   };
 
   useEffect(() => {
-    if (isOpen && selectedOptionIndex === null && optionRefList.length > 0) {
+    if (isOpen && focusedOptionIndex === null && optionRefList.length > 0) {
       const currentSelectedIndex = optionRefList.findIndex(({ optionInfo: { optionValue } }) => optionValue === value);
       if (currentSelectedIndex < 0) {
         return;
@@ -266,7 +266,7 @@ function List({ children }: PropsWithChildren) {
 
       moveOption(MoveDirection.TARGET, currentSelectedIndex);
     }
-  }, [isOpen, selectedOptionIndex, optionRefList, value]);
+  }, [isOpen, focusedOptionIndex, optionRefList, value]);
 
   useEffect(() => {
     if (listRef?.current) applyListRef(listRef);
@@ -281,7 +281,7 @@ function List({ children }: PropsWithChildren) {
       tabIndex={0}
       role="listbox"
       aria-labelledby="select-button"
-      aria-activedescendant={selectedOptionIndex !== null ? optionRefList[selectedOptionIndex]?.id : undefined}
+      aria-activedescendant={focusedOptionIndex !== null ? optionRefList[focusedOptionIndex]?.id : undefined}
     >
       {children}
     </S.List>
@@ -304,7 +304,7 @@ function Option({ optionIndex, value: optionValue, children, disabled }: PropsWi
   const optionId = useId();
   const [optionRef, setOptionRef] = useCallbackRef<HTMLLIElement>();
 
-  const { value, triggerRef, onChange, selectedOptionIndex } = useSelectContext();
+  const { value, triggerRef, onChange, focusedOptionIndex } = useSelectContext();
   const { closeSelectList, moveOption, applyOptionRef, unapplyOptionRef } = useCreateAction();
 
   const handleOptionClick = () => {
@@ -320,10 +320,10 @@ function Option({ optionIndex, value: optionValue, children, disabled }: PropsWi
   };
 
   useEffect(() => {
-    if (selectedOptionIndex === optionIndex) {
+    if (focusedOptionIndex === optionIndex) {
       optionRef?.current.focus();
     }
-  }, [selectedOptionIndex, optionIndex, optionRef]);
+  }, [focusedOptionIndex, optionIndex, optionRef]);
 
   useEffect(() => {
     if (optionRef?.current)
