@@ -5,8 +5,8 @@ import { screen } from '@testing-library/react';
  */
 
 export const TestIds = {
-  Trigger: 'select-trigger',
-  List: 'select-list',
+  Trigger: 'test/select-trigger',
+  List: 'test/select-list',
 };
 
 /**

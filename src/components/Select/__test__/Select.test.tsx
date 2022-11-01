@@ -104,6 +104,45 @@ describe('<Select />', () => {
         shouldExist: true,
       });
     });
+    it('Trigger에 as Props로 전달된 컴포넌트가 기본 버튼 대신에 렌더링 되어야 한다.', () => {
+      render(
+        <Select>
+          <Select.Trigger as={<button>instead rendering!</button>} />
+          <Select.List>
+            {optionData.map((option, index) => (
+              <Select.Option key={option} optionIndex={index} value={option}>
+                {option}
+              </Select.Option>
+            ))}
+          </Select.List>
+        </Select>,
+      );
+
+      expect(getTriggerButton()).toHaveTextContent('instead rendering!');
+    });
+
+    it('Trigger에 as Props로 전달된 컴포넌트의 이벤트 리스너가 기존 Trigger의 리스너와 함께 동작해야 한다.', async () => {
+      const onClick = jest.fn();
+
+      render(
+        <Select>
+          <Select.Trigger as={<button onClick={onClick}>instead rendering!</button>} />
+          <Select.List>
+            {optionData.map((option, index) => (
+              <Select.Option key={option} optionIndex={index} value={option}>
+                {option}
+              </Select.Option>
+            ))}
+          </Select.List>
+        </Select>,
+      );
+
+      await userEvent.click(getTriggerButton());
+      expect(onClick).toHaveBeenCalled();
+      checkSelectList({
+        shouldExist: true,
+      });
+    });
   });
 
   describe('Option 선택 시', () => {

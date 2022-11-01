@@ -9,6 +9,7 @@ import useCreateAction from './contexts/use-create-action';
 import { Actions, MoveDirection } from './contexts/type';
 import { TestIds } from './__test__/util';
 import useInternalState from '../../hooks/use-internal-state';
+import renderWithProps from '../../utils/render-with-props';
 
 /**
  * ==============================
@@ -138,7 +139,11 @@ function Select<T>({
  * ==============================
  */
 
-function Trigger({ children }: PropsWithChildren) {
+interface TriggerProps {
+  as?: JSX.Element;
+}
+
+function Trigger({ children, as }: PropsWithChildren<TriggerProps>) {
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const { toggleSelectOpenStatus, applyTriggerRef, openSelectList, moveOption } = useCreateAction();
@@ -186,19 +191,22 @@ function Trigger({ children }: PropsWithChildren) {
     if (triggerRef.current) applyTriggerRef(triggerRef);
   }, []);
 
-  return (
-    <S.Trigger
-      ref={triggerRef}
-      data-testid={TestIds.Trigger}
-      type="button"
-      onKeyDown={handleKeyDown}
-      onClick={handleClick}
-      aria-haspopup
-      aria-expanded
-      aria-controls="select-button"
-    >
-      {value !== undefined ? <>{value}</> : children}
-    </S.Trigger>
+  const triggerProps = {
+    ref: triggerRef,
+    'data-testid': TestIds.Trigger,
+    type: 'button',
+    onKeyDown: handleKeyDown,
+    onClick: handleClick,
+    'aria-haspopup': true,
+    'aria-expanded': true,
+    'aria-controls': 'select-button',
+    children: value !== undefined ? <>{value}</> : children,
+  } as const;
+
+  return as ? (
+    renderWithProps({ ...triggerProps, children: value !== undefined ? <>{value}</> : as?.props.children }, as)
+  ) : (
+    <S.Trigger {...triggerProps} />
   );
 }
 
