@@ -1,4 +1,4 @@
-import { KeyboardEvent, PropsWithChildren, useEffect, useId, useReducer, useRef } from 'react';
+import { Fragment, KeyboardEvent, PropsWithChildren, ReactNode, useEffect, useId, useReducer, useRef } from 'react';
 import styled, { css } from 'styled-components';
 import useClickOutside from '../../hooks/use-click-outside';
 import { reducer } from './contexts/reducer';
@@ -59,8 +59,7 @@ const S = {
     ${({ selected }) =>
       selected &&
       css`
-        padding-left: 0px;
-        &::before {
+        &::after {
           content: '✅';
         }
       `};
@@ -294,13 +293,18 @@ function List({ children }: PropsWithChildren) {
  * ==============================
  */
 
+type OptionRenderPropsChildren = {
+  ({ isFocused, isSelected }: { isFocused: boolean; isSelected: boolean }): JSX.Element;
+};
+
 interface OptionProps {
   value: unknown;
   disabled?: boolean;
   optionIndex: number;
+  children: OptionRenderPropsChildren | ReactNode;
 }
 
-function Option({ optionIndex, value: optionValue, children, disabled }: PropsWithChildren<OptionProps>) {
+function Option({ optionIndex, value: optionValue, children, disabled }: OptionProps) {
   const optionId = useId();
   const [optionRef, setOptionRef] = useCallbackRef<HTMLLIElement>();
 
@@ -344,19 +348,36 @@ function Option({ optionIndex, value: optionValue, children, disabled }: PropsWi
     };
   }, []);
 
-  return (
-    <S.Option
-      ref={setOptionRef}
-      id={optionId}
-      onClick={handleOptionClick}
-      onMouseOver={handleMouseOver}
-      tabIndex={0}
-      role="option"
-      aria-selected={value === optionValue}
-      selected={value === optionValue}
-    >
-      {children}
-    </S.Option>
+  const isSelected = value === optionValue;
+  const isUsingRenderProps = (children: OptionProps['children']): children is OptionRenderPropsChildren =>
+    typeof children === 'function';
+
+  const resolveChildren = () => {
+    if (!isUsingRenderProps(children)) return { children };
+
+    return {
+      children: children({ isSelected, isFocused: focusedOptionIndex === optionIndex }),
+    };
+  };
+
+  const optionProps = {
+    ref: setOptionRef,
+    id: optionId,
+    onClick: handleOptionClick,
+    onMouseOver: handleMouseOver,
+    tabIndex: 0,
+    role: 'option',
+    'aria-selected': value === optionValue,
+    selected: value === optionValue,
+    ...resolveChildren(),
+  };
+
+  const { children: resolvedChildren, ...optionPropsWithoutChildren } = optionProps;
+
+  return isUsingRenderProps(children) ? (
+    renderWithProps(optionPropsWithoutChildren, resolvedChildren)
+  ) : (
+    <S.Option {...optionProps} />
   );
 }
 

@@ -1,14 +1,20 @@
-import { cloneElement } from 'react';
+import { cloneElement, isValidElement, ReactNode } from 'react';
 
 type Props = Record<string, unknown>;
 type EventListenerType = (...args: any[]) => any;
 
-function renderWithProps(originProps: Props, targetElement: JSX.Element) {
-  const elem = cloneElement(targetElement, {
-    ...mergeProps(originProps, targetElement.props),
-  });
+function getValidElement(toBeValidElement: ReactNode) {
+  if (!isValidElement(toBeValidElement)) return <>{toBeValidElement}</>;
 
-  return elem;
+  return toBeValidElement;
+}
+
+function renderWithProps(originProps: Props, targetElement: ReactNode) {
+  const validTargetElement = getValidElement(targetElement);
+
+  return cloneElement(validTargetElement, {
+    ...mergeProps(originProps, validTargetElement.props),
+  });
 }
 
 function mergeProps(originProp: Props, subjectProp: Props) {

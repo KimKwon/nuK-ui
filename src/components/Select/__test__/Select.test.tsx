@@ -39,7 +39,9 @@ describe('<Select />', () => {
           <Select.Trigger>Select Option!</Select.Trigger>
           <Select.List>
             {optionData.map((option, index) => (
-              <Select.Option key={option} optionIndex={index} value={option} />
+              <Select.Option key={option} optionIndex={index} value={option}>
+                {option}
+              </Select.Option>
             ))}
           </Select.List>
         </Select>,
@@ -143,6 +145,34 @@ describe('<Select />', () => {
         shouldExist: true,
       });
     });
+
+    it('Option의 render props를 통해 custom Option을 렌더링할 수 있어야 한다.', async () => {
+      const onFocus = jest.fn((isFocused: boolean) => (isFocused ? 'focus' : ''));
+      const onSelect = jest.fn((isSelected: boolean) => (isSelected ? 'select' : ''));
+
+      render(
+        <Select>
+          <Select.Trigger>선택해주세요.</Select.Trigger>
+          <Select.List>
+            {optionData.map((option, index) => (
+              <Select.Option key={option} optionIndex={index} value={option}>
+                {({ isFocused, isSelected }) => (
+                  <li role="option">
+                    {onFocus(isFocused)}
+                    {onSelect(isSelected)}
+                    {option}
+                  </li>
+                )}
+              </Select.Option>
+            ))}
+          </Select.List>
+        </Select>,
+      );
+
+      await userEvent.click(getTriggerButton());
+      await userEvent.hover(getSpecificOption({ optionIndex: 1 }));
+      expect(getSpecificOption({ optionIndex: 1 })).toHaveTextContent('focus');
+    });
   });
 
   describe('Option 선택 시', () => {
@@ -153,7 +183,9 @@ describe('<Select />', () => {
           <Select.Trigger>Select Option!</Select.Trigger>
           <Select.List>
             {optionData.map((option, index) => (
-              <Select.Option key={option} optionIndex={index} value={option} />
+              <Select.Option key={option} optionIndex={index} value={option}>
+                {option}
+              </Select.Option>
             ))}
           </Select.List>
         </Select>,
@@ -172,7 +204,9 @@ describe('<Select />', () => {
           <Select.Trigger>Select Option!</Select.Trigger>
           <Select.List>
             {optionData.map((option, index) => (
-              <Select.Option key={option} optionIndex={index} value={option} />
+              <Select.Option key={option} optionIndex={index} value={option}>
+                {option}
+              </Select.Option>
             ))}
           </Select.List>
         </Select>,
