@@ -54,6 +54,7 @@ export enum MoveDirection {
   FIRST,
   LAST,
   TARGET,
+  OUT,
 }
 
 export type PayloadsType = {

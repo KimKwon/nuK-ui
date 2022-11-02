@@ -10,6 +10,7 @@ import { Actions, MoveDirection } from './contexts/type';
 import { TestIds } from './__test__/util';
 import useInternalState from '../../hooks/use-internal-state';
 import renderWithProps from '../../utils/render-with-props';
+import CheckIcon from '../../assets/CheckIcon';
 
 /**
  * ==============================
@@ -19,49 +20,65 @@ import renderWithProps from '../../utils/render-with-props';
 
 const S = {
   Select: styled.div`
+    & > * {
+      box-sizing: border-box;
+      font-size: 1rem;
+    }
     position: relative;
+    width: 200px;
+
+    & li[data-isfocused='true'] {
+      background-color: #b9f3f1;
+    }
   `,
   Trigger: styled.button`
+    width: 100%;
     background-color: transparent;
+
+    padding: 5px;
+
+    border-radius: 8px;
+    border: 2px solid #2ab1ac;
     &:focus {
-      background-color: red;
+      background-color: #c9f7f6;
+      outline: 3px solid #85d1e2;
     }
   `,
   List: styled.ul`
     padding: 0;
-    margin: 0;
+    margin: 0.25rem 0 0 0;
+    width: 100%;
+
+    overflow: hidden;
 
     position: absolute;
     z-index: 9999;
-
-    margin-top: 0.25rem;
 
     display: flex;
     flex-direction: column;
 
     background-color: white;
-    border: 1px solid black;
-    box-shadow: 3px 3px 3px 3px rgba(0, 0, 0, 0.3);
+    border: 3px solid #2ab1ac;
+    border-radius: 8px;
   `,
   Option: styled.li<{ selected: boolean }>`
     all: unset;
 
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+
     padding: 5px;
     padding-left: 30px;
-    &:focus {
-      background-color: red;
-    }
 
-    &:hover {
-      cursor: pointer;
+    & > span {
+      padding-left: 10px;
     }
 
     ${({ selected }) =>
       selected &&
       css`
-        &::after {
-          content: '✅';
-        }
+        padding-left: 10px;
       `};
   `,
 };
@@ -319,8 +336,12 @@ function Option({ optionIndex, value: optionValue, children, disabled }: OptionP
     triggerRef?.current?.focus();
   };
 
-  const handleMouseOver = () => {
+  const handleMouseEnter = () => {
     moveOption(MoveDirection.TARGET, optionIndex);
+  };
+
+  const handleMouseLeave = () => {
+    moveOption(MoveDirection.OUT);
   };
 
   useEffect(() => {
@@ -364,11 +385,13 @@ function Option({ optionIndex, value: optionValue, children, disabled }: OptionP
     ref: setOptionRef,
     id: optionId,
     onClick: handleOptionClick,
-    onMouseOver: handleMouseOver,
+    onMouseEnter: handleMouseEnter,
+    onMouseLeave: handleMouseLeave,
     tabIndex: 0,
     role: 'option',
-    'aria-selected': value === optionValue,
-    selected: value === optionValue,
+    'aria-selected': isSelected,
+    selected: isSelected,
+    'data-isFocused': focusedOptionIndex === optionIndex,
     ...resolveChildren(),
   };
 
@@ -377,7 +400,10 @@ function Option({ optionIndex, value: optionValue, children, disabled }: OptionP
   return isUsingRenderProps(children) ? (
     renderWithProps(optionPropsWithoutChildren, resolvedChildren)
   ) : (
-    <S.Option {...optionProps} />
+    <S.Option {...optionProps}>
+      {isSelected && <CheckIcon width={20} height={20} />}
+      <span>{children}</span>
+    </S.Option>
   );
 }
 

@@ -48,6 +48,9 @@ export function calcFocusIndex({ optionList, currentFocusedIndex, direction, to 
 
       return to;
     }
+    case MoveDirection.OUT: {
+      return null;
+    }
     default:
       return null;
   }
