@@ -391,7 +391,7 @@ function Option({ optionIndex, value: optionValue, children, disabled }: OptionP
     role: 'option',
     'aria-selected': isSelected,
     selected: isSelected,
-    'data-isFocused': focusedOptionIndex === optionIndex,
+    'data-isfocused': focusedOptionIndex === optionIndex,
     ...resolveChildren(),
   };
 
