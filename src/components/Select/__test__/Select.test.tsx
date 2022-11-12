@@ -4,14 +4,18 @@ import Select from '..';
 import { checkSelectList, getSpecificOption, getTriggerButton, queryAllOption, querySelectList } from './util';
 
 describe('<Select />', () => {
-  const optionData = ['옵션1', '옵션2', '옵션3'];
+  const optionData = [
+    { name: '옵션1', id: 1 },
+    { name: '옵션2', id: 2 },
+    { name: '옵션3', id: 3 },
+  ];
   const selectInterface = (
     <Select defaultValue={optionData[0]}>
-      <Select.Trigger>Select Option!</Select.Trigger>
+      <Select.Trigger>{({ value }) => value.name}</Select.Trigger>
       <Select.List>
         {optionData.map((option, index) => (
-          <Select.Option key={option} optionIndex={index} value={option}>
-            {option}
+          <Select.Option key={option.id} optionIndex={index} value={option}>
+            {option.name}
           </Select.Option>
         ))}
       </Select.List>
@@ -22,7 +26,7 @@ describe('<Select />', () => {
     it('props로 제공된 defaultValue와 Trigger의 텍스트와 일치해야 한다.', () => {
       render(selectInterface);
 
-      expect(getTriggerButton()).toHaveTextContent(optionData[0]);
+      expect(getTriggerButton()).toHaveTextContent(optionData[0].name);
     });
 
     it('List는 닫혀있어야 한다.', () => {
@@ -39,8 +43,8 @@ describe('<Select />', () => {
           <Select.Trigger>Select Option!</Select.Trigger>
           <Select.List>
             {optionData.map((option, index) => (
-              <Select.Option key={option} optionIndex={index} value={option}>
-                {option}
+              <Select.Option key={option.id} optionIndex={index} value={option}>
+                {option.name}
               </Select.Option>
             ))}
           </Select.List>
@@ -112,8 +116,8 @@ describe('<Select />', () => {
           <Select.Trigger as={<button>instead rendering!</button>} />
           <Select.List>
             {optionData.map((option, index) => (
-              <Select.Option key={option} optionIndex={index} value={option}>
-                {option}
+              <Select.Option key={option.id} optionIndex={index} value={option}>
+                {option.name}
               </Select.Option>
             ))}
           </Select.List>
@@ -131,8 +135,8 @@ describe('<Select />', () => {
           <Select.Trigger as={<button onClick={onClick}>instead rendering!</button>} />
           <Select.List>
             {optionData.map((option, index) => (
-              <Select.Option key={option} optionIndex={index} value={option}>
-                {option}
+              <Select.Option key={option.id} optionIndex={index} value={option}>
+                {option.name}
               </Select.Option>
             ))}
           </Select.List>
@@ -155,12 +159,12 @@ describe('<Select />', () => {
           <Select.Trigger>선택해주세요.</Select.Trigger>
           <Select.List>
             {optionData.map((option, index) => (
-              <Select.Option key={option} optionIndex={index} value={option}>
+              <Select.Option key={option.id} optionIndex={index} value={option}>
                 {({ isFocused, isSelected }) => (
                   <li role="option">
                     {onFocus(isFocused)}
                     {onSelect(isSelected)}
-                    {option}
+                    {option.name}
                   </li>
                 )}
               </Select.Option>
@@ -183,8 +187,8 @@ describe('<Select />', () => {
           <Select.Trigger>Select Option!</Select.Trigger>
           <Select.List>
             {optionData.map((option, index) => (
-              <Select.Option key={option} optionIndex={index} value={option}>
-                {option}
+              <Select.Option key={option.id} optionIndex={index} value={option}>
+                {option.name}
               </Select.Option>
             ))}
           </Select.List>
@@ -198,28 +202,31 @@ describe('<Select />', () => {
       expect(onChange).toHaveBeenCalledWith(optionData[2]);
     });
 
-    it('value가 undefined로 주어져도 해당 옵션으로 Trigger의 텍스트가 대치되어야 한다.', async () => {
-      render(
-        <Select value={undefined}>
-          <Select.Trigger>Select Option!</Select.Trigger>
-          <Select.List>
-            {optionData.map((option, index) => (
-              <Select.Option key={option} optionIndex={index} value={option}>
-                {option}
-              </Select.Option>
-            ))}
-          </Select.List>
-        </Select>,
-      );
-      await userEvent.click(getTriggerButton());
-      await userEvent.click(
-        getSpecificOption({
-          optionIndex: 1,
-        }),
-      );
+    /**
+     * @TODO value 제네릭 타입 공유 이후 다시 처리하기.
+     */
 
-      expect(getTriggerButton()).toHaveTextContent(optionData[1]);
-    });
+    // it('value가 undefined로 주어져도 해당 옵션으로 Trigger의 텍스트가 대치되어야 한다.', async () => {
+    //   render(
+    //     <Select value={undefined}>
+    //       <Select.Trigger>{({ value }) => value.name}</Select.Trigger>
+    //       <Select.List>
+    //         {optionData.map((option, index) => (
+    //           <Select.Option key={option.id} optionIndex={index} value={option}>
+    //             {option.name}
+    //           </Select.Option>
+    //         ))}
+    //       </Select.List>
+    //     </Select>,
+    //   );
+    //   await userEvent.click(getTriggerButton());
+    //   await userEvent.click(
+    //     getSpecificOption({
+    //       optionIndex: 1,
+    //     }),
+    //   );
+    //   expect(getTriggerButton()).toHaveTextContent(optionData[1].name);
+    // });
   });
 
   describe('Focus 관련', () => {
@@ -276,8 +283,8 @@ describe('<Select />', () => {
           <Select.Trigger>Select Option!</Select.Trigger>
           <Select.List>
             {optionData.map((option, index) => (
-              <Select.Option key={option} optionIndex={index} value={option}>
-                {option}
+              <Select.Option key={option.id} optionIndex={index} value={option}>
+                {option.name}
               </Select.Option>
             ))}
           </Select.List>
@@ -306,8 +313,8 @@ describe('<Select />', () => {
           <Select.Trigger>Select Option!</Select.Trigger>
           <Select.List>
             {optionData.map((option, index) => (
-              <Select.Option key={option} optionIndex={index} value={option}>
-                {option}
+              <Select.Option key={option.id} optionIndex={index} value={option}>
+                {option.name}
               </Select.Option>
             ))}
           </Select.List>
@@ -333,8 +340,8 @@ describe('<Select />', () => {
           <Select.Trigger>Select Option!</Select.Trigger>
           <Select.List>
             {optionData.map((option, index) => (
-              <Select.Option key={option} optionIndex={index} value={option}>
-                {option}
+              <Select.Option key={option.id} optionIndex={index} value={option}>
+                {option.name}
               </Select.Option>
             ))}
           </Select.List>
@@ -353,7 +360,7 @@ describe('<Select />', () => {
       await userEvent.keyboard('{ArrowDown}');
       await userEvent.keyboard('{ }');
 
-      expect(getTriggerButton()).toHaveTextContent(optionData[1]);
+      expect(getTriggerButton()).toHaveTextContent(optionData[1].name);
     });
 
     it('Enter로 Option 선택이 가능해야 한다.', async () => {
@@ -363,7 +370,31 @@ describe('<Select />', () => {
       await userEvent.keyboard('{ArrowDown}');
       await userEvent.keyboard('{Enter}');
 
-      expect(getTriggerButton()).toHaveTextContent(optionData[1]);
+      expect(getTriggerButton()).toHaveTextContent(optionData[1].name);
+    });
+  });
+
+  describe('value가 object 타입일 때', () => {
+    it('Option을 선택했을 때 onChange 함수가 object와 함께 실행되어야 한다.', async () => {
+      const onChange = jest.fn((value) => value);
+      render(
+        <Select value={optionData[0]} onChange={onChange}>
+          <Select.Trigger>Select Option!</Select.Trigger>
+          <Select.List>
+            {optionData.map((option, index) => (
+              <Select.Option key={option.id} optionIndex={index} value={option}>
+                {option.name}
+              </Select.Option>
+            ))}
+          </Select.List>
+        </Select>,
+      );
+      await userEvent.click(getTriggerButton());
+
+      const options = queryAllOption();
+      await userEvent.click(options[2]);
+
+      expect(onChange).toHaveBeenCalledWith(optionData[2]);
     });
   });
 });

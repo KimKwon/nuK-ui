@@ -11,6 +11,8 @@ import { TestIds } from './__test__/util';
 import useInternalState from '../../hooks/use-internal-state';
 import renderWithProps from '../../utils/render-with-props';
 import CheckIcon from '../../assets/CheckIcon';
+import { simplyCompare } from '../../utils/simply-compare';
+import { isFunction, isPlainObject } from '../../utils/type-checker';
 
 /**
  * ==============================
@@ -155,11 +157,19 @@ function Select<T>({
  * ==============================
  */
 
+/**
+ * @TODO any 타입 제거하기 / 상위 컴포넌트의 제네릭 공유하는 방법 고민해보기
+ */
+type TriggerRenderPropsChildren = {
+  ({ value }: { value: any }): JSX.Element;
+};
+
 interface TriggerProps {
   as?: JSX.Element;
+  children?: ReactNode | TriggerRenderPropsChildren;
 }
 
-function Trigger({ children, as }: PropsWithChildren<TriggerProps>) {
+function Trigger({ children, as }: TriggerProps) {
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const { toggleSelectOpenStatus, applyTriggerRef, openSelectList, moveOption } = useCreateAction();
@@ -203,6 +213,15 @@ function Trigger({ children, as }: PropsWithChildren<TriggerProps>) {
     }
   };
 
+  const isUsingRenderProps = (children: TriggerProps['children']): children is TriggerRenderPropsChildren =>
+    isFunction(children);
+
+  const resolveTriggerChildren = (children: TriggerProps['children']) => {
+    if (!isUsingRenderProps(children)) return children;
+
+    return children({ value });
+  };
+
   useEffect(() => {
     if (triggerRef.current) applyTriggerRef(triggerRef);
   }, []);
@@ -214,13 +233,21 @@ function Trigger({ children, as }: PropsWithChildren<TriggerProps>) {
     onKeyDown: handleKeyDown,
     onClick: handleClick,
     'aria-haspopup': true,
-    'aria-expanded': true,
-    'aria-controls': 'select-button',
-    children: value !== undefined ? <>{value}</> : children,
+    'aria-expanded': isOpen,
+    id: 'select-button',
+    'aria-controls': 'select-box',
+    children: value === undefined || isPlainObject(value) ? resolveTriggerChildren(children) : <>{value}</>,
   } as const;
 
   return as ? (
-    renderWithProps({ ...triggerProps, children: value !== undefined ? <>{value}</> : as?.props.children }, as)
+    renderWithProps(
+      {
+        ...triggerProps,
+        children:
+          value === undefined || isPlainObject(value) ? resolveTriggerChildren(as?.props.children) : <>{value}</>,
+      },
+      as,
+    )
   ) : (
     <S.Trigger {...triggerProps} />
   );
@@ -275,7 +302,9 @@ function List({ children }: PropsWithChildren) {
 
   useEffect(() => {
     if (isOpen && focusedOptionIndex === null && optionRefList.length > 0) {
-      const currentSelectedIndex = optionRefList.findIndex(({ optionInfo: { optionValue } }) => optionValue === value);
+      const currentSelectedIndex = optionRefList.findIndex(({ optionInfo: { optionValue } }) =>
+        simplyCompare(optionValue, value),
+      );
       if (currentSelectedIndex < 0) {
         return;
       }
@@ -333,7 +362,10 @@ function Option({ optionIndex, value: optionValue, children, disabled }: OptionP
 
     closeSelectList();
     onChange?.(optionValue);
-    triggerRef?.current?.focus();
+    if (triggerRef?.current && optionRef?.current) {
+      triggerRef.current.focus();
+      triggerRef.current.innerText = optionRef.current.innerText;
+    }
   };
 
   const handleMouseEnter = () => {
@@ -369,11 +401,11 @@ function Option({ optionIndex, value: optionValue, children, disabled }: OptionP
     };
   }, []);
 
-  const isSelected = value === optionValue;
+  const isSelected = simplyCompare(value, optionValue);
   const isUsingRenderProps = (children: OptionProps['children']): children is OptionRenderPropsChildren =>
-    typeof children === 'function';
+    isFunction(children);
 
-  const resolveChildren = () => {
+  const resolveOptionChildren = () => {
     if (!isUsingRenderProps(children)) return { children };
 
     return {
@@ -392,7 +424,7 @@ function Option({ optionIndex, value: optionValue, children, disabled }: OptionP
     'aria-selected': isSelected,
     selected: isSelected,
     'data-isfocused': focusedOptionIndex === optionIndex,
-    ...resolveChildren(),
+    ...resolveOptionChildren(),
   };
 
   const { children: resolvedChildren, ...optionPropsWithoutChildren } = optionProps;
