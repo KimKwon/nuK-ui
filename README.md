@@ -12,7 +12,7 @@
 
 ## Todo
 
-- [ ] value can handle object
+- [x] value can handle object
 - [ ] option can be disabled
 
 *later*
@@ -27,9 +27,13 @@
 
 ---
 
+
+
 ## Components
 
-See Demo 👉 [Click!](https://codesandbox.io/p/github/KimKwon/nuK-ui/draft/nifty-boyd?file=%2FREADME.md&selection=%5B%7B%22endColumn%22%3A36%2C%22endLineNumber%22%3A331%2C%22startColumn%22%3A36%2C%22startLineNumber%22%3A331%7D%5D&workspace=%257B%2522activeFileId%2522%253A%2522cl9zqmpg70001lribc94h4szg%2522%252C%2522openFiles%2522%253A%255B%2522%252FREADME.md%2522%255D%252C%2522sidebarPanel%2522%253A%2522EXPLORER%2522%252C%2522gitSidebarPanel%2522%253A%2522COMMIT%2522%252C%2522sidekickItems%2522%253A%255B%257B%2522type%2522%253A%2522PREVIEW%2522%252C%2522taskId%2522%253A%2522dev%2522%252C%2522port%2522%253A5173%252C%2522key%2522%253A%2522cl9zqn1vz00bt3b6mbo2xvlsy%2522%252C%2522isMinimized%2522%253Afalse%257D%252C%257B%2522key%2522%253A%2522cl9zqmsue000k3b6md0udl2nk%2522%252C%2522type%2522%253A%2522PROJECT_SETUP%2522%252C%2522isMinimized%2522%253Atrue%257D%255D%257D)
+:construction: Current Demo is previous version, Should be updated.
+
+Demo 👉 [Click!](https://codesandbox.io/p/github/KimKwon/nuK-ui/draft/nifty-boyd?file=%2FREADME.md&selection=%5B%7B%22endColumn%22%3A36%2C%22endLineNumber%22%3A331%2C%22startColumn%22%3A36%2C%22startLineNumber%22%3A331%7D%5D&workspace=%257B%2522activeFileId%2522%253A%2522cl9zqmpg70001lribc94h4szg%2522%252C%2522openFiles%2522%253A%255B%2522%252FREADME.md%2522%255D%252C%2522sidebarPanel%2522%253A%2522EXPLORER%2522%252C%2522gitSidebarPanel%2522%253A%2522COMMIT%2522%252C%2522sidekickItems%2522%253A%255B%257B%2522type%2522%253A%2522PREVIEW%2522%252C%2522taskId%2522%253A%2522dev%2522%252C%2522port%2522%253A5173%252C%2522key%2522%253A%2522cl9zqn1vz00bt3b6mbo2xvlsy%2522%252C%2522isMinimized%2522%253Afalse%257D%252C%257B%2522key%2522%253A%2522cl9zqmsue000k3b6md0udl2nk%2522%252C%2522type%2522%253A%2522PROJECT_SETUP%2522%252C%2522isMinimized%2522%253Atrue%257D%255D%257D)
 
 ### SelectBox
 
@@ -40,17 +44,24 @@ import { useState } from 'react';
 import Select from './components/Select';
 
 function App() {
-  const options = ['Purple', 'Black', 'Yellow', 'Red', 'Blue', 'Green'];
+    const options = [
+    { id: 1, name: 'Purple' },
+    { id: 2, name: 'Black' },
+    { id: 3, name: 'Yellow' },
+    { id: 4, name: 'Red' },
+    { id: 5, name: 'Blue' },
+    { id: 6, name: 'Green' },
+  ];
   const [value, setValue] = useState(options[0]);
 
   return (
       <Select value={value} onChange={setValue}>
-        <Select.Trigger>Select Option!</Select.Trigger>
+        <Select.Trigger>{value.name}</Select.Trigger>
         <Select.List>
           {options.map((option, index) => (
-            <Select.Option key={option} optionIndex={index} value={option}>
-              {option}
-            </Select.Option>
+            <Select.Option key={option.id} optionIndex={index} value={option}>
+              {option.name}
+            </Select.Option.name>
           ))}
         </Select.List>
       </Select>
@@ -65,7 +76,14 @@ import { useState } from 'react';
 import Select from './components/Select';
 
 function App() {
-  const options = ['Purple', 'Black', 'Yellow', 'Red', 'Blue', 'Green'];
+    const options = [
+    { id: 1, name: 'Purple' },
+    { id: 2, name: 'Black' },
+    { id: 3, name: 'Yellow' },
+    { id: 4, name: 'Red' },
+    { id: 5, name: 'Blue' },
+    { id: 6, name: 'Green' },
+  ];
   const [value, setValue] = useState(options[0]);
   
   const customButton = (
@@ -84,8 +102,56 @@ function App() {
         <Select.Trigger as={customButton} />
         <Select.List>
           {options.map((option, index) => (
-            <Select.Option key={option} optionIndex={index} value={option}>
-              {option}
+            <Select.Option key={option.id} optionIndex={index} value={option}>
+              {option.name}
+            </Select.Option>
+          ))}
+        </Select.List>
+      </Select>
+  );
+}
+```
+
+#### Show defaultValue with using Trigger render props
+
+When using defaultValue, value is controlled by internal state.
+
+```javascript
+import { useState } from 'react';
+import Select from './components/Select';
+
+function App() {
+    const options = [
+    { id: 1, name: 'Purple' },
+    { id: 2, name: 'Black' },
+    { id: 3, name: 'Yellow' },
+    { id: 4, name: 'Red' },
+    { id: 5, name: 'Blue' },
+    { id: 6, name: 'Green' },
+  ];
+  
+  const customButton = (
+    <button
+      type="button"
+      onClick={() => {
+        console.log('Custom Trigger Button.');
+      }}
+    >
+      Try Open it.
+    </button>
+  );
+
+  return (
+      <Select defaultValue={options[0]}>
+        <Select.Trigger>
+          {({ value }) => (
+            <span>{value + 'chosen!'}</span>
+          )}
+        </Select.Trigger>
+        <Select.List>
+          {options.map((option, index) => (
+            <Select.Option key={option.id} optionIndex={index} value={option}>
+              {option.name}
             </Select.Option>
           ))}
         </Select.List>
@@ -103,7 +169,14 @@ import { useState } from 'react';
 import Select from './components/Select';
 
 function App() {
-  const options = ['Purple', 'Black', 'Yellow', 'Red', 'Blue', 'Green'];
+    const options = [
+    { id: 1, name: 'Purple' },
+    { id: 2, name: 'Black' },
+    { id: 3, name: 'Yellow' },
+    { id: 4, name: 'Red' },
+    { id: 5, name: 'Blue' },
+    { id: 6, name: 'Green' },
+  ];
   const [value, setValue] = useState(options[0]);
   
   const customButton = (
@@ -118,14 +191,14 @@ function App() {
   );
 
   return (
-      <Select defaultValue={options[0]} value={value} onChange={setValue}>
-        <Select.Trigger>Select Option!</Select.Trigger>
+      <Select value={value} onChange={setValue}>
+        <Select.Trigger>{value.name}</Select.Trigger>
         <Select.List>
           {options.map((option, index) => (
-            <Select.Option key={option} optionIndex={index} value={option}>
+            <Select.Option key={option.id} optionIndex={index} value={option}>
               {({ isSelected, isFocused }) => (
                 <li>
-                  {option}
+                  {option.name}
                   {isSelected && 'Select!'}
                   {isFocused && 'Focus!'}
                 </li>
