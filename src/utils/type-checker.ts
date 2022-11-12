@@ -1,3 +1,5 @@
+import { CouldRenderProps } from '../components/Select/contexts/type';
+
 export function isPlainObject(objectable: unknown): objectable is Record<string, unknown> {
   if (typeof objectable !== 'object') return false;
   if (objectable === null) return false;
@@ -20,4 +22,8 @@ function hasProperty<T extends string>(
 
 export function isFunction(callable: unknown): callable is CallableFunction {
   return !!(callable && callable.constructor && hasProperty(callable, 'call') && hasProperty(callable, 'apply'));
+}
+
+export function isUsingRenderProps<T>(children: CouldRenderProps<T>): children is (args: T) => JSX.Element {
+  return isFunction(children);
 }

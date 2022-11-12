@@ -1,4 +1,4 @@
-import { Fragment, KeyboardEvent, PropsWithChildren, ReactNode, useEffect, useId, useReducer, useRef } from 'react';
+import { Fragment, KeyboardEvent, PropsWithChildren, useEffect, useId, useReducer, useRef } from 'react';
 import styled, { css } from 'styled-components';
 import useClickOutside from '../../hooks/use-click-outside';
 import { reducer } from './contexts/reducer';
@@ -6,13 +6,13 @@ import useSelectContext from './contexts/use-select-context';
 import useCallbackRef from '../../hooks/use-callback-ref';
 import { SelectContext } from './contexts/context';
 import useCreateAction from './contexts/use-create-action';
-import { Actions, MoveDirection } from './contexts/type';
+import { Actions, CouldRenderProps, MoveDirection, PropsWithRenderPropsChildren } from './contexts/type';
 import { TestIds } from './__test__/util';
 import useInternalState from '../../hooks/use-internal-state';
 import renderWithProps from '../../utils/render-with-props';
 import CheckIcon from '../../assets/CheckIcon';
 import { simplyCompare } from '../../utils/simply-compare';
-import { isFunction, isPlainObject } from '../../utils/type-checker';
+import { isPlainObject, isUsingRenderProps } from '../../utils/type-checker';
 
 /**
  * ==============================
@@ -160,16 +160,15 @@ function Select<T>({
 /**
  * @TODO any 타입 제거하기 / 상위 컴포넌트의 제네릭 공유하는 방법 고민해보기
  */
-type TriggerRenderPropsChildren = {
-  ({ value }: { value: any }): JSX.Element;
-};
-
 interface TriggerProps {
   as?: JSX.Element;
-  children?: ReactNode | TriggerRenderPropsChildren;
 }
 
-function Trigger({ children, as }: TriggerProps) {
+type TriggerRenderProps = {
+  value: any;
+};
+
+function Trigger({ children, as }: PropsWithRenderPropsChildren<TriggerRenderProps, TriggerProps>) {
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const { toggleSelectOpenStatus, applyTriggerRef, openSelectList, moveOption } = useCreateAction();
@@ -213,10 +212,7 @@ function Trigger({ children, as }: TriggerProps) {
     }
   };
 
-  const isUsingRenderProps = (children: TriggerProps['children']): children is TriggerRenderPropsChildren =>
-    isFunction(children);
-
-  const resolveTriggerChildren = (children: TriggerProps['children']) => {
+  const resolveTriggerChildren = (children: CouldRenderProps<TriggerRenderProps>) => {
     if (!isUsingRenderProps(children)) return children;
 
     return children({ value });
@@ -339,18 +335,20 @@ function List({ children }: PropsWithChildren) {
  * ==============================
  */
 
-type OptionRenderPropsChildren = {
-  ({ isFocused, isSelected }: { isFocused: boolean; isSelected: boolean }): JSX.Element;
-};
+type OptionRenderProps = { isFocused: boolean; isSelected: boolean };
 
 interface OptionProps {
   value: unknown;
   disabled?: boolean;
   optionIndex: number;
-  children: OptionRenderPropsChildren | ReactNode;
 }
 
-function Option({ optionIndex, value: optionValue, children, disabled }: OptionProps) {
+function Option({
+  optionIndex,
+  value: optionValue,
+  children,
+  disabled,
+}: PropsWithRenderPropsChildren<OptionRenderProps, OptionProps>) {
   const optionId = useId();
   const [optionRef, setOptionRef] = useCallbackRef<HTMLLIElement>();
 
@@ -402,8 +400,6 @@ function Option({ optionIndex, value: optionValue, children, disabled }: OptionP
   }, []);
 
   const isSelected = simplyCompare(value, optionValue);
-  const isUsingRenderProps = (children: OptionProps['children']): children is OptionRenderPropsChildren =>
-    isFunction(children);
 
   const resolveOptionChildren = () => {
     if (!isUsingRenderProps(children)) return { children };

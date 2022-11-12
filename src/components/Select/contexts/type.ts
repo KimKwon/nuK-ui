@@ -1,4 +1,4 @@
-import { Dispatch, RefObject } from 'react';
+import { Dispatch, ReactNode, RefObject } from 'react';
 
 export type SelectDispatch = Dispatch<ActionType>;
 
@@ -68,3 +68,7 @@ export type PayloadsType = {
 };
 
 export type ActionType = ActionMap[keyof PayloadsType];
+
+export type CouldRenderProps<T> = ReactNode | ((args: T) => JSX.Element);
+
+export type PropsWithRenderPropsChildren<RenderPropsType, P> = { children?: CouldRenderProps<RenderPropsType> } & P;
